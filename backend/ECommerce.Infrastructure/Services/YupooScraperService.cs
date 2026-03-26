@@ -163,6 +163,7 @@ public class YupooScraperService : IYupooScraperService
             // Broadened approach: Get ALL images and filter for Yupoo sources
             var allImages = await page.QuerySelectorAllAsync("img");
             var host = new Uri(url).Host;
+            var seenBaseIds = new HashSet<string>();
 
             foreach (var img in allImages)
             {
@@ -195,11 +196,10 @@ public class YupooScraperService : IYupooScraperService
                     if (!hasValidExtension) continue;
 
                     // Keyword check for non-product assets (Size charts, logos, etc.)
-                    // Using a more specific search to avoid matching legitimate image IDs that happen to contain these substrings
                     string[] strictJunk = { "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "contact", "whatsapp", "wechat", "notice", "rules", "shipping", "return" };
                     bool isStrictJunk = strictJunk.Any(k => lowerSrc.Contains(k));
                     
-                    // Only filter these if they appear as clear identifiers (e.g., size.jpg, chart_1.jpg)
+                    // Filter size charts only if clearly identified
                     bool isMetaJunk = System.Text.RegularExpressions.Regex.IsMatch(lowerSrc, @"[_-](size|chart|table|tablo|beden|olcu|measure|dimen|guide|spec)[._-]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     
                     if (isStrictJunk || isMetaJunk) continue;
@@ -208,14 +208,33 @@ public class YupooScraperService : IYupooScraperService
                     bool isYupooImage = src.Contains("yupoo.com") || src.Contains("/album/");
                     if (!isYupooImage) continue;
 
+                    // De-duplication using Base ID (ignores subdomain and size suffixes)
+                    var baseId = GetImageBaseId(src);
+                    if (seenBaseIds.Contains(baseId)) continue;
+                    seenBaseIds.Add(baseId);
+
                     if (!result.ImageUrls.Contains(src)) result.ImageUrls.Add(src);
                 }
             }
 
-            Console.WriteLine($"[Scraper] Found {result.ImageUrls.Count} images for: {result.Title}");
+            Console.WriteLine($"[Scraper] Found {result.ImageUrls.Count} unique images for: {result.Title}");
         }
         catch (Exception ex) { Console.WriteLine($"[Scraper] Error scraping product {url}: {ex.Message}"); }
         return result;
+    }
+
+    private string GetImageBaseId(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath.ToLower();
+            
+            // Remove common suffixes and extensions to get a clean ID
+            // e.g. /user/123/img_small.jpg -> /user/123/img
+            return System.Text.RegularExpressions.Regex.Replace(path, @"(_small|_medium|_square|_big)\.[a-z0-9]+$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        catch { return url; }
     }
 
     private string CleanTitle(string title)
