@@ -113,6 +113,13 @@ import { Category } from '../../../core/models/category.model';
             </a>
           </div>
         </div>
+
+        <!-- See All Button -->
+        <div class="mt-12 flex justify-center animate-slide-up" style="animation-delay: 0.4s;">
+          <a routerLink="/products" class="px-10 py-4 rounded-full border border-[#c5a059]/30 text-[#c5a059] font-bold text-xs tracking-[0.3em] uppercase hover:bg-[#c5a059] hover:text-black transition-all duration-300 shadow-[0_0_20px_rgba(197,160,89,0.1)] hover:shadow-[0_0_30px_rgba(197,160,89,0.3)]">
+            TÜM ARŞİVİ GÖR →
+          </a>
+        </div>
       </div>
 
       <!-- Categories Section -->
