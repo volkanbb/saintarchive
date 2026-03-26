@@ -5,6 +5,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 import { Category } from '../../../core/models/category.model';
+import { Title, Meta } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-all-products',
@@ -131,7 +132,9 @@ export class AllProductsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private titleService: Title,
+    private metaService: Meta
   ) {}
 
   ngOnInit(): void {
@@ -139,6 +142,9 @@ export class AllProductsComponent implements OnInit {
     this.productService.getProducts().subscribe(data => {
       this.products = data;
       
+      // Update Initial SEO
+      this.updateSeoTags();
+
       // Check for category query param
       this.route.queryParams.subscribe(params => {
         if (params['category']) {
@@ -148,6 +154,18 @@ export class AllProductsComponent implements OnInit {
         }
       });
     });
+  }
+
+  private updateSeoTags(categoryName?: string) {
+    const title = categoryName ? `${categoryName} Koleksiyonu | Saint Archive` : 'Tüm Ürünler | Saint Archive';
+    const description = categoryName 
+      ? `Saint Archive ${categoryName} koleksiyonundaki en özel parçaları keşfedin.` 
+      : 'Saint Archive urban giyim ve nadir parça koleksiyonun tamamına göz atın.';
+
+    this.titleService.setTitle(title);
+    this.metaService.updateTag({ name: 'description', content: description });
+    this.metaService.updateTag({ property: 'og:title', content: title });
+    this.metaService.updateTag({ property: 'og:description', content: description });
   }
 
   get currentSubCategories(): Category[] {
@@ -172,6 +190,9 @@ export class AllProductsComponent implements OnInit {
     this.selectedCategoryId = categoryId;
     this.selectedSubCategoryId = null;
     this.applyFilters();
+    
+    const catName = this.categories.find(c => c.id === categoryId)?.name;
+    this.updateSeoTags(catName);
   }
 
   getMainImageUrl(product: Product): string {

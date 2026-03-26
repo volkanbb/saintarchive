@@ -6,7 +6,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { SettingService } from '../../../core/services/setting.service';
 import { Product } from '../../../core/models/product.model';
 import { SystemSetting } from '../../../core/models/system-setting.model';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-product-detail',
@@ -127,7 +127,9 @@ export class ProductDetailComponent implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private settingService: SettingService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private titleService: Title,
+    private metaService: Meta
   ) {}
 
   ngOnInit(): void {
@@ -137,6 +139,9 @@ export class ProductDetailComponent implements OnInit {
         this.product = data;
         const main = data.images.find(i => i.isMain);
         this.mainImage = main ? main.url : (data.images.length > 0 ? data.images[0].url : '');
+        
+        // Update SEO Tags
+        this.updateSeoTags(data);
       });
     }
 
@@ -173,6 +178,30 @@ export class ProductDetailComponent implements OnInit {
     const message = `Merhaba, şu ürün hakkında bilgi almak istiyorum: *${this.product.title}*${priceSuffix}\n\nStok durumu nedir?`;
     const url = `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(message)}`;
     return this.sanitizer.bypassSecurityTrustUrl(url);
+  }
+
+  private updateSeoTags(product: Product) {
+    const title = `${product.title} | Saint Archive`;
+    const description = product.description?.replace(/<[^>]*>/g, '').substring(0, 160) || `Buy ${product.title} at Saint Archive.`;
+    const imageUrl = this.getMainImage(product);
+
+    this.titleService.setTitle(title);
+    this.metaService.updateTag({ name: 'description', content: description });
+    
+    // Open Graph
+    this.metaService.updateTag({ property: 'og:title', content: title });
+    this.metaService.updateTag({ property: 'og:description', content: description });
+    this.metaService.updateTag({ property: 'og:image', content: imageUrl });
+    
+    // Twitter
+    this.metaService.updateTag({ property: 'twitter:title', content: title });
+    this.metaService.updateTag({ property: 'twitter:description', content: description });
+    this.metaService.updateTag({ property: 'twitter:image', content: imageUrl });
+  }
+
+  private getMainImage(product: Product): string {
+    const main = product.images.find(i => i.isMain);
+    return main ? main.url : (product.images.length > 0 ? product.images[0].url : '');
   }
 
   getProxyUrl(url: string | undefined): string {
