@@ -176,6 +176,16 @@ public class YupooScraperService : IYupooScraperService
                     else if (src.StartsWith("/")) src = $"https://{host}{src}";
                     else if (!src.Contains("://")) src = $"https://{host}/{src}";
 
+                    // Yupoo Resolution Optimization: Try to get the highest resolution
+                    // Yupoo patterns: _small.jpg -> _big.jpg, or removing suffixes
+                    if (src.Contains("yupoo.com"))
+                    {
+                        // Replace common thumbnail suffixes with big version
+                        src = src.Replace("_small.", "_big.")
+                                 .Replace("_medium.", "_big.")
+                                 .Replace("_square.", "_big.");
+                    }
+
                     // Extension check
                     var lowerSrc = src.ToLower();
                     bool hasValidExtension = lowerSrc.EndsWith(".jpg") || lowerSrc.EndsWith(".jpeg") || 

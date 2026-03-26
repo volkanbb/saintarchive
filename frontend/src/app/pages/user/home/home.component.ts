@@ -87,6 +87,7 @@ import { Category } from '../../../core/models/category.model';
                 <img *ngIf="product.images.length > 0"
                      [src]="getMainImageUrl(product)" 
                      [alt]="product.title" 
+                     loading="lazy"
                      referrerpolicy="no-referrer"
                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none">
                 
@@ -134,6 +135,7 @@ import { Category } from '../../../core/models/category.model';
              class="group relative overflow-hidden rounded-xl aspect-[4/3] bg-[#111]">
             <!-- Category Image -->
             <img *ngIf="cat.imageUrl" [src]="getProxyUrl(cat.imageUrl)" [alt]="cat.name" 
+                 loading="lazy"
                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-70 group-hover:opacity-90">
             <div *ngIf="!cat.imageUrl" class="w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a]"></div>
             

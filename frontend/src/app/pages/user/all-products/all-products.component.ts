@@ -86,6 +86,7 @@ import { Title, Meta } from '@angular/platform-browser';
               <img *ngIf="product.images.length > 0"
                    [src]="getMainImageUrl(product)" 
                    [alt]="product.title" 
+                   loading="lazy"
                    referrerpolicy="no-referrer"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
               

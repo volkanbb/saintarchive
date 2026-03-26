@@ -35,9 +35,12 @@ import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
           
           <!-- Image gallery -->
           <div class="lg:col-span-7 flex flex-col gap-6">
-              <!-- Main Image -->
               <div class="stacked-card w-full aspect-[4/5] bg-[#1a1a1a] overflow-hidden shadow-2xl relative group">
-                <img [src]="getProxyUrl(mainImage)" referrerpolicy="no-referrer" alt="Product image" class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                <img [src]="getProxyUrl(mainImage)" 
+                     fetchpriority="high"
+                     referrerpolicy="no-referrer" 
+                     alt="Product image" 
+                     class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
                 
                 <!-- Navigation Arrows -->
                 <div *ngIf="product.images.length > 1" class="absolute inset-y-0 inset-x-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -63,7 +66,11 @@ import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
                       (click)="setMainImage(img.url)" 
                       [ngClass]="mainImage === img.url ? 'border-[#c5a059]' : 'border-white/10'"
                       class="aspect-square bg-[#1a1a1a] border-2 transition-all overflow-hidden">
-                <img [src]="getProxyUrl(img.url)" referrerpolicy="no-referrer" alt="" class="w-full h-full object-cover hover:opacity-50 transition-opacity">
+                <img [src]="getProxyUrl(img.url)" 
+                     loading="lazy"
+                     referrerpolicy="no-referrer" 
+                     alt="" 
+                     class="w-full h-full object-cover hover:opacity-50 transition-opacity">
               </button>
             </div>
           </div>
@@ -152,6 +159,9 @@ export class ProductDetailComponent implements OnInit {
         
         // Update SEO Tags
         this.updateSeoTags(data);
+        
+        // Preload images for better UX
+        this.preloadImages(data);
       });
     }
 
@@ -232,6 +242,19 @@ export class ProductDetailComponent implements OnInit {
 
   getProxyUrl(url: string | undefined): string {
     return this.productService.getProxyUrl(url);
+  }
+
+  private preloadImages(product: Product) {
+    if (!product.images || product.images.length === 0) return;
+    
+    // Preload top 3 images (including main)
+    product.images.slice(0, 3).forEach(img => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = this.getProxyUrl(img.url);
+      document.head.appendChild(link);
+    });
   }
 }
 

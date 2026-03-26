@@ -74,6 +74,9 @@ public class ProxyController : ControllerBase
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "image/jpeg";
 
+            // Add caching headers for 7 days
+            Response.Headers.Append("Cache-Control", "public, max-age=604800");
+
             return File(content, contentType);
         }
         catch (Exception ex)
