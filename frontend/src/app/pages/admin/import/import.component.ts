@@ -89,7 +89,7 @@ export class ImportComponent {
         });
       },
       error: (err) => {
-        this.error = 'Unable to establish connection or scrape data. Verify the URL is a direct Yupoo album link and try again.';
+        this.error = typeof err.error === 'string' ? err.error : (err.message || 'Unable to establish connection or scrape data. Verify the URL is a direct Yupoo album link and try again.');
         this.loading = false;
       }
     });

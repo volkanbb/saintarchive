@@ -30,10 +30,26 @@ public class YupooScraperService : IYupooScraperService
 
                 await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
                 
-                // Wait for either the album list OR an empty state
-                await page.WaitForSelectorAsync(".album__main, .showindex__children a, .album3__main a, .empty-state", new PageWaitForSelectorOptions { Timeout = 10000 });
+                // Wait for either the album list OR an empty state / closed account message
+                try {
+                    await page.WaitForSelectorAsync(".album__main, .album3__main, .showindex__children a, .categories__children a, .empty-state, .empty__emptytitle, .empty__main", 
+                        new PageWaitForSelectorOptions { Timeout = 15000 });
+                } catch {
+                    // If timeout, just proceed and check what we have
+                }
+
+                // Check for "homepage closed" message
+                var emptyTitle = await page.QuerySelectorAsync(".empty__emptytitle");
+                if (emptyTitle != null)
+                {
+                    var text = await emptyTitle.InnerTextAsync();
+                    if (text.Contains("temporarily closed") || text.Contains("kapalı"))
+                    {
+                        throw new KeyNotFoundException("This Yupoo account is temporarily closed or restricted.");
+                    }
+                }
                 
-                var albumElements = await page.QuerySelectorAllAsync(".album__main, .showindex__children a, .album3__main a");
+                var albumElements = await page.QuerySelectorAllAsync(".album__main, .album3__main, .showindex__children a, .categories__children a");
                 foreach (var element in albumElements)
                 {
                     var href = await element.GetAttributeAsync("href");
@@ -67,7 +83,12 @@ public class YupooScraperService : IYupooScraperService
                 }
             }
         }
-        catch (Exception ex) { Console.WriteLine($"Error scraping Yupoo category: {ex.Message}"); }
+        catch (KeyNotFoundException) { throw; }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine($"Error scraping Yupoo category: {ex.Message}"); 
+            throw new Exception($"Scraping failed: {ex.Message}");
+        }
         return albumUrls;
     }
 

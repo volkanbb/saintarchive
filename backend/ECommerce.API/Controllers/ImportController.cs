@@ -73,9 +73,13 @@ public class ImportController : ControllerBase
                 previewIds.Add(tempProduct.Id);
             }
         }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(ex.Message);
+        }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Internal error during import: {ex.Message}");
+            return StatusCode(500, ex.Message);
         }
 
         if (previewIds.Count == 0) return BadRequest("Could not scrape any products.");
