@@ -227,7 +227,9 @@ public class YupooScraperService : IYupooScraperService
     {
         try
         {
-            var uri = new Uri(url);
+            // Remove query parameters first to ensure consistent ID extraction
+            var cleanUrl = url.Split('?')[0];
+            var uri = new Uri(cleanUrl);
             var path = uri.AbsolutePath.ToLower();
             
             // Remove common suffixes and extensions to get a clean ID
