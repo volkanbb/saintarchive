@@ -1,0 +1,182 @@
+using ECommerce.Application.Interfaces;
+using Microsoft.Playwright;
+
+namespace ECommerce.Infrastructure.Services;
+
+public class YupooScraperService : IYupooScraperService
+{
+    private readonly BrowserTypeLaunchOptions _launchOptions = new()
+    {
+        Headless = true,
+        Args = new[] { "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-software-rasterizer" }
+    };
+
+    public async Task<List<string>> ScrapeCategoryAsync(string categoryUrl, CancellationToken cancellationToken = default)
+    {
+        var albumUrls = new List<string>();
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
+        var page = await browser.NewPageAsync();
+
+        try
+        {
+            var currentUrl = categoryUrl;
+            int pageCount = 0;
+            const int maxPages = 15; // Increased safety limit for large categories
+
+            while (!string.IsNullOrEmpty(currentUrl) && pageCount < maxPages)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
+                
+                // Wait for either the album list OR an empty state
+                await page.WaitForSelectorAsync(".album__main, .showindex__children a, .album3__main a, .empty-state", new PageWaitForSelectorOptions { Timeout = 10000 });
+                
+                var albumElements = await page.QuerySelectorAllAsync(".album__main, .showindex__children a, .album3__main a");
+                foreach (var element in albumElements)
+                {
+                    var href = await element.GetAttributeAsync("href");
+                    if (!string.IsNullOrEmpty(href))
+                    {
+                        var fullUrl = href.StartsWith("http") ? href : $"https://{new Uri(categoryUrl).Host}{href}";
+                        if (!albumUrls.Contains(fullUrl)) albumUrls.Add(fullUrl);
+                    }
+                }
+
+                // Check for next page
+                var nextButton = await page.QuerySelectorAsync(".categories__box-right-pagination-button-next, a.next, .pagination__next");
+                if (nextButton != null)
+                {
+                    var isDisabled = await nextButton.GetAttributeAsync("disabled");
+                    var nextHref = await nextButton.GetAttributeAsync("href");
+
+                    if (string.IsNullOrEmpty(isDisabled) && !string.IsNullOrEmpty(nextHref))
+                    {
+                        currentUrl = nextHref.StartsWith("http") ? nextHref : $"https://{new Uri(categoryUrl).Host}{nextHref}";
+                        pageCount++;
+                    }
+                    else
+                    {
+                        currentUrl = null;
+                    }
+                }
+                else
+                {
+                    currentUrl = null;
+                }
+            }
+        }
+        catch (Exception ex) { Console.WriteLine($"Error scraping Yupoo category: {ex.Message}"); }
+        return albumUrls;
+    }
+
+    public async Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default)
+    {
+        var products = new List<ScrapedProductInfo>();
+        var albumUrls = await ScrapeCategoryAsync(categoryUrl, cancellationToken);
+        if (albumUrls.Count == 0) return products;
+
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
+        var page = await browser.NewPageAsync();
+
+        foreach (var url in albumUrls.Take(20)) // Limit to 20 for safety
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            try
+            {
+                var info = await ScrapeProductInternalAsync(page, url);
+                if (info != null && !string.IsNullOrEmpty(info.Title)) products.Add(info);
+                // Tiny delay to be nice to Yupoo
+                await Task.Delay(500, cancellationToken);
+            }
+            catch (Exception ex) { Console.WriteLine($"Error in bulk scrape for {url}: {ex.Message}"); }
+        }
+
+        return products;
+    }
+
+    public async Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default)
+    {
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
+        var page = await browser.NewPageAsync();
+        return await ScrapeProductInternalAsync(page, yupooUrl);
+    }
+
+    private async Task<ScrapedProductInfo> ScrapeProductInternalAsync(IPage page, string url)
+    {
+        var result = new ScrapedProductInfo { Url = url };
+        try
+        {
+            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
+            
+            // Scroll to the bottom to trigger lazy-loaded images - IMPROVED
+            await page.EvaluateAsync(@"async () => {
+                await new Promise((resolve) => {
+                    let totalHeight = 0;
+                    let distance = 600;
+                    let timer = setInterval(() => {
+                        let scrollHeight = document.body.scrollHeight;
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        
+                        // If we reached the bottom or a very large height
+                        if(totalHeight >= scrollHeight || totalHeight > 15000){
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 200);
+                });
+            }");
+
+            // Wait for network to be idle and images to actually load
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await Task.Delay(2000); // Give it some extra time for dynamic elements
+
+            var titleElement = await page.QuerySelectorAsync(".showalbumheader__gallerytitle, .showindex__title");
+            result.Title = titleElement != null ? (await titleElement.InnerTextAsync()).Trim() : (await page.TitleAsync()).Replace(" - Yupoo", "").Trim();
+
+            // Broadened approach: Get ALL images and filter for Yupoo sources
+            var allImages = await page.QuerySelectorAllAsync("img");
+            var host = new Uri(url).Host;
+
+            foreach (var img in allImages)
+            {
+                var src = await img.GetAttributeAsync("data-origin-src") ?? 
+                          await img.GetAttributeAsync("data-src") ?? 
+                          await img.GetAttributeAsync("src");
+                
+                if (!string.IsNullOrEmpty(src))
+                {
+                    // protocol handling
+                    if (src.StartsWith("//")) src = "https:" + src;
+                    else if (src.StartsWith("/")) src = $"https://{host}{src}";
+                    else if (!src.Contains("://")) src = $"https://{host}/{src}";
+
+                    // Extension check
+                    var lowerSrc = src.ToLower();
+                    bool hasValidExtension = lowerSrc.EndsWith(".jpg") || lowerSrc.EndsWith(".jpeg") || 
+                                           lowerSrc.EndsWith(".png") || lowerSrc.EndsWith(".webp");
+                    
+                    if (!hasValidExtension) continue;
+
+                    // Keyword check for non-product assets
+                    string[] junkKeywords = { "logo", "icon", "avatar", "static", "user", "banner", "btn", "button" };
+                    bool isJunk = junkKeywords.Any(k => lowerSrc.Contains(k));
+                    if (isJunk) continue;
+
+                    // Specifically for Yupoo, we want photo.yupoo.com or the album images
+                    bool isYupooImage = src.Contains("yupoo.com") || src.Contains("/album/");
+                    if (!isYupooImage) continue;
+
+                    if (!result.ImageUrls.Contains(src)) result.ImageUrls.Add(src);
+                }
+            }
+
+        }
+        catch (Exception ex) { Console.WriteLine($"Error scraping product {url}: {ex.Message}"); }
+        return result;
+    }
+}

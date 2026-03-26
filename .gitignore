@@ -1,0 +1,54 @@
+# .gitignore for Saint Archive Project
+
+# Generic
+[Tt]emp/
+[Ll]og/
+[Nn]ode_modules/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Visual Studio / .NET
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/
+
+# Angular
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Backend Specific
+backend/.vs/
+backend/*/bin/
+backend/*/obj/
+backend/appsettings.Development.json
+backend/appsettings.Local.json
+
+# Logs and temp files in root
+*.txt
+*.log
+compose_log.txt
+scraper_crash*.txt
+verbose_ef*.txt
+backend_latest_logs.txt
+backend_error_context.txt
+crash_logs*.txt
+docker_build_logs.txt
+decoded_logs.txt
