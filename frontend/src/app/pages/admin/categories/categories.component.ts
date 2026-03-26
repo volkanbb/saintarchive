@@ -43,10 +43,8 @@ import { Category } from '../../../core/models/category.model';
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Sub-categories (Comma separated)</label>
               <input type="text" [(ngModel)]="subCategoryNames" name="subs" 
-                     [disabled]="!!editingCategory"
                      class="block w-full rounded-xl border-slate-300 border bg-slate-50 px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors" placeholder="e.g. Giyim, Aksesuar, Ayakkabı">
-              <p class="text-[10px] text-slate-400 mt-1" *ngIf="!editingCategory">Enter names separated by commas to create multiple sub-categories at once.</p>
-              <p class="text-[10px] text-amber-600 mt-1" *ngIf="editingCategory">Bulk sub-category adding is only available during creation.</p>
+              <p class="text-[10px] text-slate-400 mt-1">Enter names separated by commas to add multiple sub-categories. Existing ones will be preserved.</p>
             </div>
           </div>
           <!-- Image preview -->
@@ -186,7 +184,7 @@ export class CategoriesComponent implements OnInit {
     };
 
     if (this.editingCategory) {
-      this.categoryService.updateCategory(this.editingCategory.id, this.newCategory).subscribe(() => {
+      this.categoryService.updateCategory(this.editingCategory.id, payload as any).subscribe(() => {
         this.loadCategories();
         this.cancelEdit();
       });
@@ -205,7 +203,8 @@ export class CategoriesComponent implements OnInit {
       description: cat.description, 
       imageUrl: cat.imageUrl || '' 
     };
-    this.subCategoryNames = ''; // Disable bulk edit for sub-categories
+    // Populate existing sub-categories for easy addition
+    this.subCategoryNames = cat.subCategories?.map(s => s.name).join(', ') || '';
     this.imageError = false;
   }
 

@@ -136,7 +136,10 @@ public class CategoriesController : ControllerBase
     {
         Console.WriteLine($"[API] Updating category {id}: {request.Name}, ImageUrl: {request.ImageUrl}");
         
-        var category = await _context.Categories.FindAsync(id);
+        var category = await _context.Categories
+            .Include(c => c.SubCategories)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
         if (category == null) return NotFound();
 
         category.Name = request.Name;
@@ -144,6 +147,26 @@ public class CategoriesController : ControllerBase
         category.Slug = request.Name.ToLower().Replace(" ", "-");
         category.ImageUrl = request.ImageUrl;
         category.UpdatedAt = DateTime.UtcNow;
+
+        // Bulk add sub-categories if provided
+        if (request.SubCategories != null && request.SubCategories.Any())
+        {
+            foreach (var subDto in request.SubCategories)
+            {
+                // Simple duplicate check by name within this parent
+                if (!category.SubCategories.Any(s => s.Name.Equals(subDto.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _context.Categories.Add(new Category
+                    {
+                        Name = subDto.Name,
+                        Description = subDto.Description,
+                        Slug = subDto.Name.ToLower().Replace(" ", "-"),
+                        ImageUrl = subDto.ImageUrl,
+                        ParentCategory = category
+                    });
+                }
+            }
+        }
 
         await _context.SaveChangesAsync();
         return NoContent();
