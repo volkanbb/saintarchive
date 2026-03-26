@@ -157,7 +157,8 @@ public class YupooScraperService : IYupooScraperService
             await Task.Delay(2000); // Give it some extra time for dynamic elements
 
             var titleElement = await page.QuerySelectorAsync(".showalbumheader__gallerytitle, .showindex__title");
-            result.Title = titleElement != null ? (await titleElement.InnerTextAsync()).Trim() : (await page.TitleAsync()).Replace(" - Yupoo", "").Trim();
+            var rawTitle = titleElement != null ? (await titleElement.InnerTextAsync()).Trim() : (await page.TitleAsync()).Replace(" - Yupoo", "").Trim();
+            result.Title = CleanTitle(rawTitle);
 
             // Broadened approach: Get ALL images and filter for Yupoo sources
             var allImages = await page.QuerySelectorAllAsync("img");
@@ -209,5 +210,25 @@ public class YupooScraperService : IYupooScraperService
         }
         catch (Exception ex) { Console.WriteLine($"Error scraping product {url}: {ex.Message}"); }
         return result;
+    }
+
+    private string CleanTitle(string title)
+    {
+        if (string.IsNullOrEmpty(title)) return title;
+
+        // Remove patterns like: 195¥, ￥195, 195yuan, 195rmb, etc.
+        // Handles both standard and full-width currency symbols
+        string cleaned = System.Text.RegularExpressions.Regex.Replace(title, 
+            @"(\d+\s*[¥￥\u00A5\uffe5]|(?:[¥￥\u00A5\uffe5])\s*\d+|\d+\s*(?:yuan|rmb))", 
+            "", 
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        // Remove leftover double spaces and trim
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ").Trim();
+        
+        // Remove leading/trailing dashes or pipes that might be left over
+        cleaned = cleaned.Trim('-', '|', ' ', '：', ':');
+
+        return string.IsNullOrEmpty(cleaned) ? title : cleaned;
     }
 }
