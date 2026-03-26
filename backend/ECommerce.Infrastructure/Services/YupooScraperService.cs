@@ -28,7 +28,7 @@ public class YupooScraperService : IYupooScraperService
             {
                 if (cancellationToken.IsCancellationRequested) break;
 
-                await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
+                await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 60000 });
                 
                 // Wait for either the album list OR an empty state / closed account message
                 try {
@@ -131,7 +131,7 @@ public class YupooScraperService : IYupooScraperService
         var result = new ScrapedProductInfo { Url = url };
         try
         {
-            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 });
+            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 60000 });
             
             // Scroll to the bottom to trigger lazy-loaded images - IMPROVED
             await page.EvaluateAsync(@"async () => {
@@ -152,8 +152,8 @@ public class YupooScraperService : IYupooScraperService
                 });
             }");
 
-            // Wait for network to be idle and images to actually load
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            // Wait for images to actually load
+            await page.WaitForLoadStateAsync(LoadState.Load);
             await Task.Delay(2000); // Give it some extra time for dynamic elements
 
             var titleElement = await page.QuerySelectorAsync(".showalbumheader__gallerytitle, .showindex__title");
