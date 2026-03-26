@@ -130,6 +130,8 @@ using (var scope = app.Services.CreateScope())
             // Seed Admin User
             var adminEmail = "admin@admin.com";
             var adminUser = userManager.FindByEmailAsync(adminEmail).Result;
+            var newPassword = "obDs9gP4F9@";
+
             if (adminUser == null)
             {
                 var user = new User
@@ -139,11 +141,22 @@ using (var scope = app.Services.CreateScope())
                     FullName = "System Admin",
                     EmailConfirmed = true
                 };
-                var result = userManager.CreateAsync(user, "Admin123!").Result;
+                var result = userManager.CreateAsync(user, newPassword).Result;
                 if (result.Succeeded)
                 {
                     userManager.AddToRoleAsync(user, "Admin").Wait();
                     logger.LogInformation("Default Admin user seeded successfully.");
+                }
+            }
+            else
+            {
+                // Ensure the password is updated if it was the old default
+                // This helps users who haven't logged in yet
+                var token = userManager.GeneratePasswordResetTokenAsync(adminUser).Result;
+                var result = userManager.ResetPasswordAsync(adminUser, token, newPassword).Result;
+                if (result.Succeeded)
+                {
+                    logger.LogInformation("Admin password updated to the latest requested value.");
                 }
             }
 
