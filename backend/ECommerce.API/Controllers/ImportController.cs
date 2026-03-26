@@ -118,7 +118,8 @@ public class ImportController : ControllerBase
             Description = request.Description,
             Price = request.Price,
             IsFeatured = request.IsFeatured,
-            CategoryId = category.Id
+            CategoryId = category.Id,
+            SubCategoryId = request.SubCategoryId
         };
 
         _context.Products.Add(product);

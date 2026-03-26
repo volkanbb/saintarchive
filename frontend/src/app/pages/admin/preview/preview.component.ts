@@ -46,14 +46,28 @@ import { Category } from '../../../core/models/category.model';
               
               <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Categorization <span class="text-red-500">*</span></label>
-                <div class="relative">
-                  <select [(ngModel)]="selectedCategory" 
-                          class="w-full appearance-none rounded-xl border-slate-300 border bg-slate-50 px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors text-slate-900">
-                    <option value="" disabled selected>Select a category folder</option>
-                    <option *ngFor="let cat of categories" [value]="cat.id">{{cat.name}}</option>
-                  </select>
-                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                <div class="space-y-4">
+                  <div class="relative">
+                    <select [(ngModel)]="selectedCategory" (change)="onCategoryChange()"
+                            class="w-full appearance-none rounded-xl border-slate-300 border bg-slate-50 px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors text-slate-900">
+                      <option value="" disabled selected>Select a category folder</option>
+                      <option *ngFor="let cat of categories" [value]="cat.id">{{cat.name}}</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                  </div>
+
+                  <!-- Sub-category Selection -->
+                  <div class="relative" *ngIf="subCategories.length > 0">
+                    <select [(ngModel)]="selectedSubCategory" 
+                            class="w-full appearance-none rounded-xl border-slate-300 border bg-slate-50 px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors text-slate-900">
+                      <option value="" selected>Select sub-category (Optional)</option>
+                      <option *ngFor="let sub of subCategories" [value]="sub.id">{{sub.name}}</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -154,7 +168,9 @@ import { Category } from '../../../core/models/category.model';
 export class PreviewComponent implements OnInit {
   preview: ImportPreview | null = null;
   categories: Category[] = [];
+  subCategories: Category[] = [];
   selectedCategory = '';
+  selectedSubCategory = '';
   mainImage = '';
   price: number = 0;
   isFeatured: boolean = false;
@@ -179,8 +195,17 @@ export class PreviewComponent implements OnInit {
     
     this.categoryService.getCategories().subscribe(res => {
       this.categories = res;
-      if (res.length > 0) this.selectedCategory = res[0].id;
+      if (res.length > 0) {
+        this.selectedCategory = res[0].id;
+        this.onCategoryChange();
+      }
     });
+  }
+
+  onCategoryChange() {
+    const category = this.categories.find(c => c.id === this.selectedCategory);
+    this.subCategories = category?.subCategories || [];
+    this.selectedSubCategory = '';
   }
 
   setMain(url: string) {
@@ -209,6 +234,7 @@ export class PreviewComponent implements OnInit {
       description: this.preview.description,
       price: this.price,
       categoryId: this.selectedCategory,
+      subCategoryId: this.selectedSubCategory || null,
       isFeatured: this.isFeatured,
       selectedImages: this.preview.images,
       mainImage: this.mainImage
