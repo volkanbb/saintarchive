@@ -10,6 +10,7 @@ public interface IAppDbContext
     DbSet<ProductImage> ProductImages { get; set; }
     DbSet<TempImportedProduct> TempImportedProducts { get; set; }
     DbSet<SystemSetting> SystemSettings { get; set; }
+    DbSet<YupooScrapeTask> YupooScrapeTasks { get; set; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

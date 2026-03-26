@@ -11,11 +11,15 @@ export class ImportService {
 
   constructor(private http: HttpClient) {}
 
-  previewImport(url: string): Observable<{ previewId: string }> {
+  previewImport(url: string): Observable<{ taskId: string }> {
     // Send string as JSON string or plain text. The backend expects [FromBody] string url
-    return this.http.post<{ previewId: string }>(this.API_URL, `"${url}"`, {
+    return this.http.post<{ taskId: string }>(this.API_URL, `"${url}"`, {
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+
+  getTaskStatus(id: string): Observable<any> {
+    return this.http.get<any>(`${this.API_URL}/task/${id}`);
   }
 
   getPreview(id: string): Observable<ImportPreview> {

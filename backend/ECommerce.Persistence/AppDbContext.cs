@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>, I
     public DbSet<ProductImage> ProductImages { get; set; }
     public DbSet<TempImportedProduct> TempImportedProducts { get; set; }
     public DbSet<SystemSetting> SystemSettings { get; set; }
+    public DbSet<YupooScrapeTask> YupooScrapeTasks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

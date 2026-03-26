@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ImportService } from '../../../core/services/import.service';
+import { interval, switchMap, takeWhile, tap } from 'rxjs';
 
 @Component({
   selector: 'app-import',
@@ -34,16 +35,28 @@ import { ImportService } from '../../../core/services/import.service';
             <p class="text-xs text-slate-400 mt-2 ml-1">Example: https://x.yupoo.com/photos/vendor/albums/12345</p>
           </div>
           
-          <div *ngIf="loading" class="mb-6 bg-brand-50 border border-brand-100 rounded-xl p-4 flex items-center gap-4 animate-pulse">
-            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
-              <svg class="w-5 h-5 text-brand-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+          <div *ngIf="loading" class="mb-6 bg-brand-50 border border-brand-100 rounded-xl p-4 flex flex-col gap-3 animate-fade-in">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+                <svg class="w-5 h-5 text-brand-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-brand-900">{{progressMessage || 'Initializing Scraping Protocol...'}}</p>
+                <p class="text-xs text-brand-700 mt-0.5">Contacting Yupoo servers and pulling media. This avoids Cloudflare timeouts.</p>
+              </div>
             </div>
-            <div>
-              <p class="text-sm font-semibold text-brand-900">Initializing Scraping Protocol...</p>
-              <p class="text-xs text-brand-700 mt-0.5">Contacting Yupoo servers and pulling media. This usually takes 5-15 seconds.</p>
+            
+            <!-- Progress Bar -->
+            <div *ngIf="progressCount > 0 || totalCount > 0" class="w-full bg-brand-200/50 rounded-full h-2 overflow-hidden mt-1">
+              <div class="bg-brand-600 h-full transition-all duration-500" 
+                   [style.width.%]="totalCount > 0 ? (progressCount / totalCount * 100) : 10"></div>
+            </div>
+            <div *ngIf="totalCount > 0" class="flex justify-between text-[10px] font-bold text-brand-700 uppercase tracking-wider">
+               <span>Extracted {{progressCount}} items</span>
+               <span>Total: {{totalCount}}</span>
             </div>
           </div>
           
@@ -72,6 +85,9 @@ export class ImportComponent {
   url = '';
   loading = false;
   error = '';
+  progressMessage = '';
+  progressCount = 0;
+  totalCount = 0;
 
   constructor(private importService: ImportService, private router: Router) {}
 
@@ -79,17 +95,49 @@ export class ImportComponent {
     if (!this.url) return;
     this.loading = true;
     this.error = '';
+    this.progressMessage = 'Creating extraction task...';
+    this.progressCount = 0;
+    this.totalCount = 0;
 
     this.importService.previewImport(this.url).subscribe({
       next: (res: any) => {
-        // If multiple products were found, pass them as a list
-        const ids = res.previewIds || [res.previewId];
-        this.router.navigate(['/admin/preview', ids[0]], { 
-          queryParams: { queue: ids.slice(1).join(',') } 
+        const taskId = res.taskId;
+        
+        // Start polling
+        interval(2000).pipe(
+          switchMap(() => this.importService.getTaskStatus(taskId)),
+          tap(status => {
+            this.progressCount = status.processedAlbums;
+            this.totalCount = status.totalAlbums;
+            
+            if (status.status === 'Processing') {
+              this.progressMessage = `Extracting product info (${this.progressCount}/${this.totalCount})...`;
+            } else if (status.status === 'Completed') {
+              this.progressMessage = 'Extraction complete! Redirecting...';
+            } else if (status.status === 'Failed') {
+              this.error = status.errorMessage || 'Extraction failed unexpectedly.';
+              this.loading = false;
+            }
+          }),
+          takeWhile(status => status.status === 'Pending' || status.status === 'Processing', true)
+        ).subscribe({
+          complete: () => {
+            this.importService.getTaskStatus(taskId).subscribe(finalStatus => {
+              if (finalStatus.status === 'Completed' && finalStatus.previewIds?.length > 0) {
+                const ids = finalStatus.previewIds;
+                this.router.navigate(['/admin/preview', ids[0]], { 
+                  queryParams: { queue: ids.slice(1).join(',') } 
+                });
+              } else if (finalStatus.status === 'Completed') {
+                this.error = 'No items were successfully extracted from the target URL.';
+                this.loading = false;
+              }
+            });
+          }
         });
       },
       error: (err) => {
-        this.error = typeof err.error === 'string' ? err.error : (err.message || 'Unable to establish connection or scrape data. Verify the URL is a direct Yupoo album link and try again.');
+        this.error = typeof err.error === 'string' ? err.error : (err.message || 'Unable to establish connection or scrape data.');
         this.loading = false;
       }
     });
