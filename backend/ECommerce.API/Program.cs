@@ -150,12 +150,12 @@ using (var scope = app.Services.CreateScope())
             }
             else
             {
-                // Ensure the password is updated if it was the old default
-                // This helps users who haven't logged in yet
-                var token = userManager.GeneratePasswordResetTokenAsync(adminUser).Result;
-                var result = userManager.ResetPasswordAsync(adminUser, token, newPassword).Result;
-                if (result.Succeeded)
+                // Simple password check/update. 
+                // We don't use tokens here because they might fail if DataProtection is not fully configured.
+                if (!userManager.CheckPasswordAsync(adminUser, newPassword).Result)
                 {
+                    userManager.RemovePasswordAsync(adminUser).Wait();
+                    userManager.AddPasswordAsync(adminUser, newPassword).Wait();
                     logger.LogInformation("Admin password updated to the latest requested value.");
                 }
             }
