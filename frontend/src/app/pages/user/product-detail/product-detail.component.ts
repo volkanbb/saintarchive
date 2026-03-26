@@ -35,17 +35,27 @@ import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
           
           <!-- Image gallery -->
           <div class="lg:col-span-7 flex flex-col gap-6">
-            <!-- Main Image -->
-            <div class="stacked-card w-full aspect-[4/5] bg-[#1a1a1a] overflow-hidden shadow-2xl relative group">
-              <img [src]="getProxyUrl(mainImage)" referrerpolicy="no-referrer" alt="Product image" class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
-              
-              <!-- Brand Label overlay -->
-              <div class="absolute top-6 left-6">
-                <span class="bg-white text-black text-[10px] font-black px-3 py-1 uppercase tracking-tighter shadow-xl">
-                  🔥 {{ product.categoryName }}
-                </span>
+              <!-- Main Image -->
+              <div class="stacked-card w-full aspect-[4/5] bg-[#1a1a1a] overflow-hidden shadow-2xl relative group">
+                <img [src]="getProxyUrl(mainImage)" referrerpolicy="no-referrer" alt="Product image" class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105">
+                
+                <!-- Navigation Arrows -->
+                <div *ngIf="product.images.length > 1" class="absolute inset-y-0 inset-x-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button (click)="prevImage($event)" class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#c5a059] hover:border-[#c5a059] transition-all transform hover:scale-110 active:scale-95 shadow-xl">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button (click)="nextImage($event)" class="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#c5a059] hover:border-[#c5a059] transition-all transform hover:scale-110 active:scale-95 shadow-xl">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
+
+                <!-- Brand Label overlay -->
+                <div class="absolute top-6 left-6">
+                  <span class="bg-white text-black text-[10px] font-black px-3 py-1 uppercase tracking-tighter shadow-xl">
+                    🔥 {{ product.categoryName }}
+                  </span>
+                </div>
               </div>
-            </div>
             
             <!-- Thumbnails grid -->
             <div class="grid grid-cols-5 gap-4">
@@ -153,6 +163,22 @@ export class ProductDetailComponent implements OnInit {
 
   setMainImage(url: string) {
     this.mainImage = url;
+  }
+
+  nextImage(event: Event) {
+    event.stopPropagation();
+    if (!this.product || this.product.images.length <= 1) return;
+    const currentIndex = this.product.images.findIndex(img => img.url === this.mainImage);
+    const nextIndex = (currentIndex + 1) % this.product.images.length;
+    this.mainImage = this.product.images[nextIndex].url;
+  }
+
+  prevImage(event: Event) {
+    event.stopPropagation();
+    if (!this.product || this.product.images.length <= 1) return;
+    const currentIndex = this.product.images.findIndex(img => img.url === this.mainImage);
+    const prevIndex = (currentIndex - 1 + this.product.images.length) % this.product.images.length;
+    this.mainImage = this.product.images[prevIndex].url;
   }
 
   incrementQuantity() {
