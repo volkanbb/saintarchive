@@ -195,13 +195,14 @@ public class YupooScraperService : IYupooScraperService
                     if (!hasValidExtension) continue;
 
                     // Keyword check for non-product assets (Size charts, logos, etc.)
-                    string[] junkKeywords = { 
-                        "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "loading",
-                        "size", "chart", "guide", "table", "tablo", "beden", "olcu", "measure", "dimen", 
-                        "contact", "whatsapp", "wechat", "notice", "rules", "shipping", "return"
-                    };
-                    bool isJunk = junkKeywords.Any(k => lowerSrc.Contains(k));
-                    if (isJunk) continue;
+                    // Using a more specific search to avoid matching legitimate image IDs that happen to contain these substrings
+                    string[] strictJunk = { "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "contact", "whatsapp", "wechat", "notice", "rules", "shipping", "return" };
+                    bool isStrictJunk = strictJunk.Any(k => lowerSrc.Contains(k));
+                    
+                    // Only filter these if they appear as clear identifiers (e.g., size.jpg, chart_1.jpg)
+                    bool isMetaJunk = System.Text.RegularExpressions.Regex.IsMatch(lowerSrc, @"[_-](size|chart|table|tablo|beden|olcu|measure|dimen|guide|spec)[._-]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                    if (isStrictJunk || isMetaJunk) continue;
 
                     // Specifically for Yupoo, we want photo.yupoo.com or the album images
                     bool isYupooImage = src.Contains("yupoo.com") || src.Contains("/album/");
@@ -211,8 +212,9 @@ public class YupooScraperService : IYupooScraperService
                 }
             }
 
+            Console.WriteLine($"[Scraper] Found {result.ImageUrls.Count} images for: {result.Title}");
         }
-        catch (Exception ex) { Console.WriteLine($"Error scraping product {url}: {ex.Message}"); }
+        catch (Exception ex) { Console.WriteLine($"[Scraper] Error scraping product {url}: {ex.Message}"); }
         return result;
     }
 
