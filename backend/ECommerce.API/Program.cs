@@ -139,7 +139,8 @@ using (var scope = app.Services.CreateScope())
                     UserName = adminEmail,
                     Email = adminEmail,
                     FullName = "System Admin",
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    IsAdmin = true // Set the flag
                 };
                 var result = userManager.CreateAsync(user, newPassword).Result;
                 if (result.Succeeded)
@@ -157,6 +158,13 @@ using (var scope = app.Services.CreateScope())
                     userManager.RemovePasswordAsync(adminUser).Wait();
                     userManager.AddPasswordAsync(adminUser, newPassword).Wait();
                     logger.LogInformation("Admin password updated to the latest requested value.");
+                }
+
+                if (!adminUser.IsAdmin)
+                {
+                    adminUser.IsAdmin = true;
+                    userManager.UpdateAsync(adminUser).Wait();
+                    logger.LogInformation("Admin flag set for existing admin user.");
                 }
             }
 

@@ -48,6 +48,10 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./pages/admin/settings/settings.component').then(m => m.SettingsComponent)
       },
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/admin/users/admin-users.component').then(m => m.AdminUsersComponent)
+      },
       { path: 'preview/:id', loadComponent: () => import('./pages/admin/preview/preview.component').then(c => c.PreviewComponent) }
     ]
   },
