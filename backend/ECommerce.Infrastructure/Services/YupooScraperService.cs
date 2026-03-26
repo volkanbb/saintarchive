@@ -194,8 +194,12 @@ public class YupooScraperService : IYupooScraperService
                     
                     if (!hasValidExtension) continue;
 
-                    // Keyword check for non-product assets
-                    string[] junkKeywords = { "logo", "icon", "avatar", "static", "user", "banner", "btn", "button" };
+                    // Keyword check for non-product assets (Size charts, logos, etc.)
+                    string[] junkKeywords = { 
+                        "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "loading",
+                        "size", "chart", "guide", "table", "tablo", "beden", "olcu", "measure", "dimen", 
+                        "contact", "whatsapp", "wechat", "notice", "rules", "shipping", "return"
+                    };
                     bool isJunk = junkKeywords.Any(k => lowerSrc.Contains(k));
                     if (isJunk) continue;
 
