@@ -196,11 +196,16 @@ public class YupooScraperService : IYupooScraperService
                     if (!hasValidExtension) continue;
 
                     // Keyword check for non-product assets (Size charts, logos, etc.)
-                    string[] strictJunk = { "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "contact", "whatsapp", "wechat", "notice", "rules", "shipping", "return" };
+                    string[] strictJunk = { 
+                        "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "contact", 
+                        "whatsapp", "wechat", "notice", "rules", "shipping", "return", "homepage"
+                    };
                     bool isStrictJunk = strictJunk.Any(k => lowerSrc.Contains(k));
                     
-                    // Filter size charts only if clearly identified
-                    bool isMetaJunk = System.Text.RegularExpressions.Regex.IsMatch(lowerSrc, @"[_-](size|chart|table|tablo|beden|olcu|measure|dimen|guide|spec)[._-]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    // Filter size charts (English and Chinese: 尺寸, 尺码, 厘米, 表)
+                    bool isMetaJunk = System.Text.RegularExpressions.Regex.IsMatch(lowerSrc, 
+                        @"[_-](size|chart|table|tablo|beden|olcu|measure|dimen|guide|spec|chizhi|chicun|guige|[\u4e00-\u9fa5])[._-]", 
+                        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     
                     if (isStrictJunk || isMetaJunk) continue;
 
@@ -209,6 +214,7 @@ public class YupooScraperService : IYupooScraperService
                     if (!isYupooImage) continue;
 
                     // De-duplication using Base ID (ignores subdomain and size suffixes)
+                    // We use the parent folder ID segment as the unique identifier
                     var baseId = GetImageBaseId(src);
                     if (seenBaseIds.Contains(baseId)) continue;
                     seenBaseIds.Add(baseId);
@@ -227,34 +233,38 @@ public class YupooScraperService : IYupooScraperService
     {
         try
         {
-            // Remove query parameters first to ensure consistent ID extraction
+            // Remove query parameters first
             var cleanUrl = url.Split('?')[0];
-            var uri = new Uri(cleanUrl);
-            var path = uri.AbsolutePath.ToLower();
+            var parts = cleanUrl.Split('/');
             
-            // Remove common suffixes and extensions to get a clean ID
-            // e.g. /user/123/img_small.jpg -> /user/123/img
-            return System.Text.RegularExpressions.Regex.Replace(path, @"(_small|_medium|_square|_big)\.[a-z0-9]+$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            // Yupoo patterns: photo.yupoo.com/user/ID_SEGMENT/FILENAME.jpg
+            if (parts.Length >= 2)
+            {
+                // The segment immediately before the filename is the stable asset ID
+                return parts[parts.Length - 2];
+            }
+            return cleanUrl.ToLower();
         }
-        catch { return url; }
+        catch { return url.ToLower(); }
     }
 
     private string CleanTitle(string title)
     {
         if (string.IsNullOrEmpty(title)) return title;
 
-        // Remove patterns like: 195¥, ￥195, 195yuan, 195rmb, etc.
+        // 1. Remove price patterns (195¥, ￥195, 200rmb, etc.)
         // Handles both standard and full-width currency symbols
         string cleaned = System.Text.RegularExpressions.Regex.Replace(title, 
             @"(\d+\s*[¥￥\u00A5\uffe5]|(?:[¥￥\u00A5\uffe5])\s*\d+|\d+\s*(?:yuan|rmb))", 
             "", 
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-        // Remove leftover double spaces and trim
+        // 2. Remove Chinese characters (CJK range)
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"[\u4e00-\u9fa5]+", "");
+
+        // 3. Final cleanup of spaces and punctuation
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ").Trim();
-        
-        // Remove leading/trailing dashes or pipes that might be left over
-        cleaned = cleaned.Trim('-', '|', ' ', '：', ':');
+        cleaned = cleaned.Trim('-', '|', ' ', '：', ':', '[', ']', '(', ')', '{', '}');
 
         return string.IsNullOrEmpty(cleaned) ? title : cleaned;
     }
