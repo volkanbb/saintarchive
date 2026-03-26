@@ -103,8 +103,8 @@ export class ImportComponent {
       next: (res: any) => {
         const taskId = res.taskId;
         
-        // Start polling
-        interval(2000).pipe(
+        // Start polling every 5 seconds (Reduced frequency to bypass Cloudflare bot protection)
+        interval(5000).pipe(
           switchMap(() => this.importService.getTaskStatus(taskId)),
           tap(status => {
             this.progressCount = status.processedAlbums;
