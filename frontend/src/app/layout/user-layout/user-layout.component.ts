@@ -27,7 +27,7 @@ import { Observable, map } from 'rxjs';
           <!-- Collection Dropdown -->
           <div class="relative" (mouseenter)="showDropdown = true" (mouseleave)="showDropdown = false">
             <a routerLink="/products" class="hover:text-white transition-colors uppercase cursor-pointer flex items-center gap-1">
-              Collection
+              KOLEKSİYON
               <svg class="w-4 h-4 transition-transform" [class.rotate-180]="showDropdown" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
@@ -69,7 +69,7 @@ import { Observable, map } from 'rxjs';
           </button>
         </div>
       </div>
-
+ 
       <!-- Mobile Menu -->
       <div *ngIf="showMobileMenu" class="md:hidden bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/5 px-4 py-6">
         <a routerLink="/" (click)="showMobileMenu = false" class="block py-3 text-white uppercase tracking-widest font-display">Archive</a>
@@ -82,12 +82,12 @@ import { Observable, map } from 'rxjs';
         </a>
       </div>
     </header>
-
+ 
     <!-- Main Content -->
     <main class="min-h-screen pt-24 flex flex-col">
       <router-outlet></router-outlet>
     </main>
-
+ 
     <!-- Footer -->
     <footer class="relative z-20 bg-[#020202]/80 backdrop-blur-md border-t border-white/5 py-20 mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-12">
@@ -97,10 +97,10 @@ import { Observable, map } from 'rxjs';
         </div>
         
         <nav class="flex flex-wrap justify-center gap-x-12 gap-y-4 text-xs font-bold uppercase tracking-[0.2em] text-white/40">
-          <a href="#" class="hover:text-white transition-colors">Privacy</a>
-          <a href="#" class="hover:text-white transition-colors">Terms</a>
-          <a href="#" class="hover:text-white transition-colors">Shipping</a>
-          <a href="#" class="hover:text-white transition-colors">Contact</a>
+          <a href="#" class="hover:text-white transition-colors">GİZLİLİK</a>
+          <a href="#" class="hover:text-white transition-colors">ŞARTLAR</a>
+          <a href="#" class="hover:text-white transition-colors">KARGO</a>
+          <a href="#" class="hover:text-white transition-colors">İLETİŞİM</a>
         </nav>
 
         <p class="text-white/20 text-[10px] tracking-[0.1em] uppercase">

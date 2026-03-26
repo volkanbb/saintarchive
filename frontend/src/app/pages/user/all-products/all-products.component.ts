@@ -106,7 +106,7 @@ import { Category } from '../../../core/models/category.model';
                 {{product.title}}
               </h3>
               <p class="text-lg font-display font-black tracking-widest text-[#c5a059] mt-1">
-                  {{ product.price > 0 ? (product.price | number:'1.0-0') + ' ₺' : 'INQUIRE' }}
+                  {{ product.price > 0 ? (product.price | number:'1.0-0') + ' ₺' : 'FİYAT SORUNUZ' }}
               </p>
             </div>
           </a>

@@ -32,30 +32,30 @@ import { Category } from '../../../core/models/category.model';
         </div>
 
         <div class="flex flex-col items-center gap-6 animate-slide-up" style="animation-delay: 0.2s;">
-            <p class="text-[#c5a059] text-[10px] tracking-[0.3em] uppercase font-bold">COLLECTION READY</p>
+            <p class="text-[#c5a059] text-[10px] tracking-[0.3em] uppercase font-bold">KOLEKSİYON HAZIR</p>
             <button (click)="scrollToProducts()" class="btn-gold group">
-                ENTER ARCHIVE
+                ARCHIVE'E GİR
                 <span class="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
             </button>
         </div>
       </div>
-
+ 
       <!-- Scroll Indicator -->
       <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-t from-[#c5a059] to-transparent animate-bounce"></div>
     </div>
-
+ 
     <!-- Content Section -->
     <div class="relative z-20 w-full" style="background-color: rgba(2,2,2,0.93);">
     <!-- Smooth gradient transition from hero -->
     <div class="absolute top-0 left-0 w-full h-32 -translate-y-full bg-gradient-to-b from-transparent to-[rgba(2,2,2,0.93)] pointer-events-none"></div>
-
+ 
       <!-- Featured Products Slider -->
       <div id="products-grid" class="py-24 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
             <h2 class="text-4xl md:text-6xl font-display font-bold text-white tracking-[0.2em] uppercase" style="text-shadow: 0 4px 12px rgba(0,0,0,0.5);">ÖNE ÇIKANLAR</h2>
             <div class="h-1.5 w-24 bg-[#c5a059] mt-4 mx-auto shadow-[0_0_15px_rgba(197,160,89,0.5)]"></div>
         </div>
-
+ 
         <!-- Horizontal Scroll Slider Wrapper -->
         <div class="relative max-w-7xl mx-auto group/slider px-4 md:px-12">
           
@@ -69,7 +69,7 @@ import { Category } from '../../../core/models/category.model';
                   class="absolute right-0 lg:-right-6 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 border border-[#c5a059]/30 text-[#c5a059] flex items-center justify-center hover:bg-[#c5a059] hover:text-black hover:scale-110 transition-all duration-300 shadow-[0_0_20px_rgba(0,0,0,0.8)] group-hover/slider:opacity-100 opacity-0 lg:opacity-100">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
           </button>
-
+ 
           <!-- Slider Container -->
           <div #slider class="flex gap-4 md:gap-8 overflow-x-auto py-8 scroll-smooth snap-x snap-mandatory hide-scrollbar justify-start px-4 md:px-0" 
                (mousedown)="onSliderMouseDown($event)"
@@ -99,9 +99,9 @@ import { Category } from '../../../core/models/category.model';
                    <h3 class="text-lg font-bold text-white leading-tight mb-2 uppercase tracking-wider group-hover:text-[#c5a059] transition-colors">{{product.title}}</h3>
                    <div class="flex items-center justify-between mt-4">
                       <p class="text-xl font-display font-black tracking-widest text-[#c5a059]">
-                        {{ product.price > 0 ? (product.price | number:'1.0-0') + ' ₺' : 'INQUIRE' }}
+                        {{ product.price > 0 ? (product.price | number:'1.0-0') + ' ₺' : 'FİYAT SORUNUZ' }}
                       </p>
-                      <span class="text-[10px] text-white/40 font-bold group-hover:text-[#c5a059] transition-colors">VIEW PIECE →</span>
+                      <span class="text-[10px] text-white/40 font-bold group-hover:text-[#c5a059] transition-colors">İNCELE →</span>
                    </div>
                 </div>
 
