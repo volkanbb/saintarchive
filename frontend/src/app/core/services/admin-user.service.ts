@@ -21,7 +21,7 @@ export interface CreateAdminRequest {
 })
 export class AdminUserService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/admin/users`;
+  private apiUrl = '/api/admin/users';
 
   getAdmins(): Observable<AdminUser[]> {
     return this.http.get<AdminUser[]>(this.apiUrl);
