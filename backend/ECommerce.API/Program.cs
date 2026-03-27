@@ -169,18 +169,25 @@ using (var scope = app.Services.CreateScope())
             }
 
             // Seed System Settings
-            if (!db.SystemSettings.Any(s => s.Key == "WhatsAppNumber"))
+            var defaultSettings = new List<SystemSetting>
             {
-                db.SystemSettings.Add(new SystemSetting
+                new SystemSetting { Key = "WhatsAppNumber", Value = "33612345678", Description = "Store contact WhatsApp number (International format without +)" },
+                new SystemSetting { Key = "InstagramUrl", Value = "https://instagram.com/saintarchive", Description = "Instagram profile URL" },
+                new SystemSetting { Key = "TelegramUrl", Value = "https://t.me/saintarchive", Description = "Telegram channel or support URL" },
+                new SystemSetting { Key = "ContactEmail", Value = "info@saintarchive.com.tr", Description = "Public contact email address" },
+                new SystemSetting { Key = "StoreAddress", Value = "Istanbul, Turkey", Description = "Physical store address or location info" }
+            };
+
+            foreach (var setting in defaultSettings)
+            {
+                if (!db.SystemSettings.Any(s => s.Key == setting.Key))
                 {
-                    Id = Guid.NewGuid(),
-                    Key = "WhatsAppNumber",
-                    Value = "33612345678",
-                    Description = "Store contact WhatsApp number (International format without +)"
-                });
-                db.SaveChanges();
-                logger.LogInformation("Default WhatsApp number seeded.");
+                    setting.Id = Guid.NewGuid();
+                    db.SystemSettings.Add(setting);
+                    logger.LogInformation($"Default setting {setting.Key} seeded.");
+                }
             }
+            db.SaveChanges();
 
             break;
         }

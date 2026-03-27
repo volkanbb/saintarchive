@@ -100,7 +100,7 @@ import { Observable, map } from 'rxjs';
           <a href="#" class="hover:text-white transition-colors">GİZLİLİK</a>
           <a href="#" class="hover:text-white transition-colors">ŞARTLAR</a>
           <a href="#" class="hover:text-white transition-colors">KARGO</a>
-          <a href="#" class="hover:text-white transition-colors">İLETİŞİM</a>
+          <a routerLink="/contact" class="hover:text-white transition-colors">İLETİŞİM</a>
         </nav>
 
         <p class="text-white/20 text-[10px] tracking-[0.1em] uppercase">

@@ -12,6 +12,7 @@ export const routes: Routes = [
       { path: 'category/:id', loadComponent: () => import('./pages/user/category-view/category-view.component').then(c => c.CategoryViewComponent) },
       { path: 'product/:id', loadComponent: () => import('./pages/user/product-detail/product-detail.component').then(c => c.ProductDetailComponent) },
       { path: 'cart', loadComponent: () => import('./pages/user/cart/cart.component').then(c => c.CartComponent) },
+      { path: 'contact', loadComponent: () => import('./pages/user/contact/contact.component').then(c => c.ContactComponent) }
     ]
   },
   {
