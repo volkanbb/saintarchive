@@ -336,6 +336,24 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-update-categories")]
+    public async Task<IActionResult> BulkUpdateCategories([FromBody] BulkUpdateCategoriesRequest request)
+    {
+        var products = await _context.Products
+            .Where(p => request.ProductIds.Contains(p.Id))
+            .ToListAsync();
+
+        foreach (var product in products)
+        {
+            product.CategoryId = request.CategoryId;
+            product.SubCategoryId = request.SubCategoryId;
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
     [HttpPost("bulk-delete-images")]
     public async Task<IActionResult> BulkDeleteImages([FromBody] List<Guid> imageIds)
     {
@@ -411,4 +429,11 @@ public class BulkUpdateSizesRequest
 {
     public List<Guid> ProductIds { get; set; } = new();
     public List<Guid> SizeIds { get; set; } = new();
+}
+
+public class BulkUpdateCategoriesRequest
+{
+    public List<Guid> ProductIds { get; set; } = new();
+    public Guid CategoryId { get; set; }
+    public Guid? SubCategoryId { get; set; }
 }

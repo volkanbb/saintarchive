@@ -57,6 +57,10 @@ export class ProductService {
     return this.http.post<void>(`${this.API_URL}/bulk-update-sizes`, { productIds, sizeIds });
   }
 
+  bulkUpdateCategories(productIds: string[], categoryId: string, subCategoryId?: string): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-update-categories`, { productIds, categoryId, subCategoryId });
+  }
+
   addSize(name: string): Observable<Size> {
     return this.http.post<Size>(`${this.API_URL}/sizes`, { name });
   }
