@@ -87,6 +87,10 @@ export class ProductService {
     return this.http.post<void>(`${this.API_URL}/bulk-delete-images`, imageIds);
   }
 
+  bulkUpdateDetails(updates: any[]): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-update-details`, { items: updates });
+  }
+
   getProxyUrl(url: string | undefined): string {
     if (!url) return '';
     return `/api/Proxy/image?url=${encodeURIComponent(url)}`;

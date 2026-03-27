@@ -363,6 +363,28 @@ public class ProductsController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-update-details")]
+    public async Task<IActionResult> BulkUpdateDetails([FromBody] BulkUpdateDetailsRequest request)
+    {
+        var productIds = request.Items.Select(i => i.Id).ToList();
+        var products = await _context.Products.Where(p => productIds.Contains(p.Id)).ToListAsync();
+
+        foreach (var item in request.Items)
+        {
+            var product = products.FirstOrDefault(p => p.Id == item.Id);
+            if (product != null)
+            {
+                product.Title = item.Title;
+                product.Price = item.Price;
+                product.Description = item.Description;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
     [HttpPost("bulk-delete-images")]
     public async Task<IActionResult> BulkDeleteImages([FromBody] List<Guid> imageIds)
     {
@@ -445,4 +467,17 @@ public class BulkUpdateCategoriesRequest
     public List<Guid> ProductIds { get; set; } = new();
     public Guid CategoryId { get; set; }
     public Guid? SubCategoryId { get; set; }
+}
+
+public class BulkUpdateDetailsRequest
+{
+    public List<ProductDetailUpdateItem> Items { get; set; } = new();
+}
+
+public class ProductDetailUpdateItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public string Description { get; set; } = string.Empty;
 }

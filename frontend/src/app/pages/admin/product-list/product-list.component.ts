@@ -8,11 +8,12 @@ import { Category } from '../../../core/models/category.model';
 import { FormsModule } from '@angular/forms';
 import { BulkEditImagesModalComponent } from './bulk-edit-images-modal.component';
 import { BulkEditCategoriesModalComponent } from './bulk-edit-categories-modal.component';
+import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, BulkEditImagesModalComponent, BulkEditCategoriesModalComponent, FormsModule],
+  imports: [CommonModule, RouterLink, BulkEditImagesModalComponent, BulkEditCategoriesModalComponent, BulkEditDetailsModalComponent, FormsModule],
   template: `
     <div class="animate-fade-in pb-20">
       <div class="flex items-center justify-between mb-8">
@@ -70,6 +71,10 @@ import { BulkEditCategoriesModalComponent } from './bulk-edit-categories-modal.c
             <button (click)="openBulkCategoryModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                 Assign Category
+            </button>
+            <button (click)="openBulkDetailsModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Edit Details
             </button>
             <button (click)="openBulkImageModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -189,6 +194,14 @@ import { BulkEditCategoriesModalComponent } from './bulk-edit-categories-modal.c
         (close)="closeBulkCategoryModal()"
         (updated)="onCategoriesUpdated()">
     </app-bulk-edit-categories-modal>
+
+    <!-- Bulk Details Modal -->
+    <app-bulk-edit-details-modal 
+        *ngIf="showBulkDetailsModal"
+        [selectedProducts]="getSelectedProducts()"
+        (close)="closeBulkDetailsModal()"
+        (updated)="onDetailsUpdated()">
+    </app-bulk-edit-details-modal>
   `
 })
 export class ProductListComponent implements OnInit {
@@ -202,6 +215,7 @@ export class ProductListComponent implements OnInit {
 
   showBulkImageModal = false;
   showBulkCategoryModal = false;
+  showBulkDetailsModal = false;
   
   allCategories: Category[] = [];
   selectedCategoryId: string = '';
@@ -339,6 +353,19 @@ export class ProductListComponent implements OnInit {
   }
 
   onCategoriesUpdated() {
+    this.loadProducts();
+    this.clearSelection();
+  }
+
+  openBulkDetailsModal() {
+    this.showBulkDetailsModal = true;
+  }
+
+  closeBulkDetailsModal() {
+    this.showBulkDetailsModal = false;
+  }
+
+  onDetailsUpdated() {
     this.loadProducts();
     this.clearSelection();
   }
