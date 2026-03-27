@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { Product, Size } from '../../../core/models/product.model';
+import { BulkEditImagesModalComponent } from './bulk-edit-images-modal.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, BulkEditImagesModalComponent],
   template: `
     <div class="animate-fade-in pb-20">
       <div class="flex items-center justify-between mb-8">
@@ -37,6 +38,10 @@ import { Product, Size } from '../../../core/models/product.model';
             <button (click)="openBulkSizeModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                 Assign Sizes
+            </button>
+            <button (click)="openBulkImageModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Manage Images
             </button>
             <button (click)="bulkDelete()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -136,6 +141,14 @@ import { Product, Size } from '../../../core/models/product.model';
             </div>
         </div>
     </div>
+
+    <!-- Bulk Image Modal -->
+    <app-bulk-edit-images-modal 
+        *ngIf="showBulkImageModal"
+        [selectedProducts]="getSelectedProducts()"
+        (close)="closeBulkImageModal()"
+        (deleted)="onImagesDeleted()">
+    </app-bulk-edit-images-modal>
   `
 })
 export class ProductListComponent implements OnInit {
@@ -146,6 +159,8 @@ export class ProductListComponent implements OnInit {
   availableSizes: Size[] = [];
   selectedSizeIdsForBulk = new Set<string>();
   applying = false;
+
+  showBulkImageModal = false;
 
   constructor(private productService: ProductService) {}
 
@@ -247,5 +262,22 @@ export class ProductListComponent implements OnInit {
 
   getMainImageUrl(product: Product): string {
     return this.productService.getMainImageUrl(product);
+  }
+
+  openBulkImageModal() {
+    this.showBulkImageModal = true;
+  }
+
+  closeBulkImageModal() {
+    this.showBulkImageModal = false;
+  }
+
+  getSelectedProducts(): Product[] {
+    return this.products.filter(p => this.selectedProductIds.has(p.id));
+  }
+
+  onImagesDeleted() {
+    this.loadProducts();
+    // Keep selection if products still exist, but refresh their data
   }
 }

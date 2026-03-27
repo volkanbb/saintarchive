@@ -334,6 +334,39 @@ public class ProductsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-delete-images")]
+    public async Task<IActionResult> BulkDeleteImages([FromBody] List<Guid> imageIds)
+    {
+        var images = await _context.ProductImages
+            .Where(i => imageIds.Contains(i.Id))
+            .ToListAsync();
+
+        if (!images.Any()) return NoContent();
+
+        // Group by ProductId to handle "Main" image logic
+        var productIds = images.Select(i => i.ProductId).Distinct().ToList();
+
+        _context.ProductImages.RemoveRange(images);
+
+        // For each affected product, ensure there's still a main image if any images remain
+        foreach (var productId in productIds)
+        {
+            var remainingImages = await _context.ProductImages
+                .Where(i => i.ProductId == productId && !imageIds.Contains(i.Id))
+                .OrderBy(i => i.Id)
+                .ToListAsync();
+
+            if (remainingImages.Any() && !remainingImages.Any(i => i.IsMain))
+            {
+                remainingImages.First().IsMain = true;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 public class BulkUpdateSizesRequest
