@@ -32,9 +32,9 @@ import { ProductService } from '../../../core/services/product.service';
                  class="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
               <div class="flex gap-6">
                 <!-- Visual Preview -->
-                <div class="w-20 h-20 rounded-2xl bg-black overflow-hidden flex-shrink-0 border border-white/10 flex items-center justify-center">
-                  <img *ngIf="selectedCategories[i].imageUrl" [src]="getProxyUrl(selectedCategories[i].imageUrl)" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                  <svg *ngIf="!selectedCategories[i].imageUrl" class="w-8 h-8 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                <div class="w-32 h-32 rounded-2xl bg-black overflow-hidden flex-shrink-0 border border-white/10 flex items-center justify-center">
+                  <img *ngIf="item.imageUrl" [src]="getProxyUrl(item.imageUrl)" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                  <svg *ngIf="!item.imageUrl" class="w-12 h-12 text-white/10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </div>
                 
                 <!-- Fields -->
@@ -47,12 +47,28 @@ import { ProductService } from '../../../core/services/product.service';
                            placeholder="Category Name">
                   </div>
                   
+                  <!-- Image URL -->
+                  <div>
+                    <label class="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-2 block">Image URL</label>
+                    <input [(ngModel)]="item.imageUrl" 
+                           class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                           placeholder="https://photo.yupoo.com/...">
+                  </div>
+
                   <!-- Description -->
                   <div>
                     <label class="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-2 block">Description</label>
                     <input [(ngModel)]="item.description"
                            class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white/70 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                            placeholder="Category Description">
+                  </div>
+
+                  <!-- Sub-categories -->
+                  <div>
+                    <label class="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-2 block">Sub-categories (Comma separated)</label>
+                    <input [(ngModel)]="item.subCategoryNamesStr"
+                           class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                           placeholder="Sub1, Sub2, Sub3">
                   </div>
                 </div>
               </div>
@@ -102,7 +118,9 @@ export class BulkEditCategoryDetailsModalComponent implements OnInit {
     this.editableItems = this.selectedCategories.map(c => ({
       id: c.id,
       name: c.name,
-      description: c.description
+      description: c.description,
+      imageUrl: c.imageUrl || '',
+      subCategoryNamesStr: c.subCategories?.map(s => s.name).join(', ') || ''
     }));
   }
 
@@ -117,8 +135,16 @@ export class BulkEditCategoryDetailsModalComponent implements OnInit {
       return;
     }
 
+    const updates = this.editableItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      subCategoryNames: item.subCategoryNamesStr.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+    }));
+
     this.isSaving = true;
-    this.categoryService.bulkUpdateCategoryDetails(this.editableItems).subscribe({
+    this.categoryService.bulkUpdateCategoryDetails(updates).subscribe({
       next: () => {
         this.isSaving = false;
         this.updated.emit();

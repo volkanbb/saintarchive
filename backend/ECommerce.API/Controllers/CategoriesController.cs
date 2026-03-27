@@ -201,12 +201,33 @@ public class CategoriesController : ControllerBase
     {
         foreach (var item in request.Items)
         {
-            var category = await _context.Categories.FindAsync(item.Id);
+            var category = await _context.Categories
+                .Include(c => c.SubCategories)
+                .FirstOrDefaultAsync(c => c.Id == item.Id);
+            
             if (category != null)
             {
                 category.Name = item.Name;
                 category.Description = item.Description;
                 category.Slug = item.Name.ToLower().Replace(" ", "-");
+                category.ImageUrl = item.ImageUrl;
+                category.UpdatedAt = DateTime.UtcNow;
+
+                if (item.SubCategoryNames != null && item.SubCategoryNames.Any())
+                {
+                    foreach (var name in item.SubCategoryNames)
+                    {
+                        if (!category.SubCategories.Any(s => s.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            _context.Categories.Add(new Category
+                            {
+                                Name = name,
+                                Slug = name.ToLower().Replace(" ", "-"),
+                                ParentCategoryId = category.Id
+                            });
+                        }
+                    }
+                }
             }
         }
 
@@ -225,4 +246,6 @@ public class CategoryDetailUpdateItem
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public List<string>? SubCategoryNames { get; set; }
 }
