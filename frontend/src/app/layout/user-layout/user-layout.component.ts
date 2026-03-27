@@ -3,7 +3,9 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CategoryService } from '../../core/services/category.service';
 import { CartService } from '../../core/services/cart.service';
+import { SettingService } from '../../core/services/setting.service';
 import { Category } from '../../core/models/category.model';
+import { SystemSetting } from '../../core/models/system-setting.model';
 import { Observable, map } from 'rxjs';
 
 @Component({
@@ -51,6 +53,49 @@ import { Observable, map } from 'rxjs';
               </div>
             </div>
           </div>
+
+          <!-- Contact Dropdown -->
+          <div class="relative" (mouseenter)="showContactDropdown = true" (mouseleave)="showContactDropdown = false">
+            <a routerLink="/contact" class="hover:text-white transition-colors uppercase cursor-pointer flex items-center gap-1">
+              İLETİŞİM
+              <svg class="w-4 h-4 transition-transform" [class.rotate-180]="showContactDropdown" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
+            
+            <!-- Contact Dropdown Content -->
+            <div *ngIf="showContactDropdown" class="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-64">
+              <div class="bg-[#0a0a0a]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                <!-- Social Channels Section Label -->
+                <div class="px-5 py-3 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] border-b border-white/5">Hızlı Erişim</div>
+                
+                <a [href]="'https://wa.me/' + getSettingValue('WhatsAppNumber')" target="_blank"
+                   class="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-brand-400 hover:bg-white/5 transition-all group">
+                   <div class="w-2 h-2 rounded-full bg-brand-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   WhatsApp
+                </a>
+                <a [href]="getSettingValue('InstagramUrl')" target="_blank"
+                   class="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-pink-500 hover:bg-white/5 transition-all group border-t border-white/5">
+                   <div class="w-2 h-2 rounded-full bg-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   Instagram
+                </a>
+                <a [href]="getSettingValue('TikTokUrl')" target="_blank"
+                   class="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-cyan-500 hover:bg-white/5 transition-all group border-t border-white/5">
+                   <div class="w-2 h-2 rounded-full bg-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   TikTok
+                </a>
+                <a [href]="'mailto:' + getSettingValue('ContactEmail')"
+                   class="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-[#c5a059] hover:bg-white/5 transition-all group border-t border-white/5">
+                   <div class="w-2 h-2 rounded-full bg-[#c5a059] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                   E-posta
+                </a>
+                <a routerLink="/contact" 
+                   class="block px-5 py-4 text-[10px] text-center font-black text-white/40 uppercase tracking-[0.3em] hover:text-white hover:bg-white/5 transition-all bg-white/2">
+                   Tümünü Gör
+                </a>
+              </div>
+            </div>
+          </div>
         </nav>
 
         <!-- Right Actions -->
@@ -71,23 +116,50 @@ import { Observable, map } from 'rxjs';
       </div>
  
       <!-- Mobile Menu -->
-      <div *ngIf="showMobileMenu" class="md:hidden bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/5 px-4 py-6">
+      <div *ngIf="showMobileMenu" class="md:hidden bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/5 px-4 py-6 max-h-[85vh] overflow-y-auto">
         <a routerLink="/" (click)="showMobileMenu = false" class="block py-3 text-white uppercase tracking-widest font-display">Archive</a>
-        <a routerLink="/products" (click)="showMobileMenu = false" class="block py-3 text-[#c5a059] uppercase tracking-widest font-display">Tüm Ürünler</a>
-        <a *ngFor="let cat of categories" 
-           [routerLink]="['/products']" [queryParams]="{category: cat.id}"
-           (click)="showMobileMenu = false"
-           class="block py-2 pl-4 text-white/60 uppercase tracking-wider text-sm">
-          {{ cat.name }}
-        </a>
+        
+        <div class="py-3">
+          <div class="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Koleksiyon</div>
+          <a routerLink="/products" (click)="showMobileMenu = false" class="block py-2 text-[#c5a059] uppercase tracking-wider font-bold">Tüm Ürünler</a>
+          <a *ngFor="let cat of categories" 
+             [routerLink]="['/products']" [queryParams]="{category: cat.id}"
+             (click)="showMobileMenu = false"
+             class="block py-2 pl-4 text-white/60 uppercase tracking-wider text-sm transition-colors hover:text-white">
+            {{ cat.name }}
+          </a>
+        </div>
+
+        <div class="py-3 border-t border-white/5">
+          <div class="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">İletişim</div>
+          <a [href]="'https://wa.me/' + getSettingValue('WhatsAppNumber')" target="_blank" (click)="showMobileMenu = false" 
+             class="flex items-center gap-3 py-3 text-white/70 transition-colors hover:text-brand-400">
+             <div class="w-1.5 h-1.5 rounded-full bg-brand-500"></div> WhatsApp
+          </a>
+          <a [href]="getSettingValue('InstagramUrl')" target="_blank" (click)="showMobileMenu = false"
+             class="flex items-center gap-3 py-3 text-white/70 transition-colors hover:text-pink-500">
+             <div class="w-1.5 h-1.5 rounded-full bg-pink-500"></div> Instagram
+          </a>
+          <a [href]="getSettingValue('TikTokUrl')" target="_blank" (click)="showMobileMenu = false"
+             class="flex items-center gap-3 py-3 text-white/70 transition-colors hover:text-cyan-500">
+             <div class="w-1.5 h-1.5 rounded-full bg-cyan-500"></div> TikTok
+          </a>
+          <a [href]="'mailto:' + getSettingValue('ContactEmail')" (click)="showMobileMenu = false"
+             class="flex items-center gap-3 py-3 text-white/70 transition-colors hover:text-[#c5a059]">
+             <div class="w-1.5 h-1.5 rounded-full bg-[#c5a059]"></div> E-posta
+          </a>
+          <a routerLink="/contact" (click)="showMobileMenu = false" class="block mt-4 py-3 text-center border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-white/40">
+            İletişim Sayfası
+          </a>
+        </div>
       </div>
     </header>
- 
+
     <!-- Main Content -->
     <main class="min-h-screen pt-24 flex flex-col">
       <router-outlet></router-outlet>
     </main>
- 
+
     <!-- Footer -->
     <footer class="relative z-20 bg-[#020202]/80 backdrop-blur-md border-t border-white/5 py-20 mt-auto">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center gap-12">
@@ -113,13 +185,16 @@ import { Observable, map } from 'rxjs';
 export class UserLayoutComponent implements OnInit {
   currentYear = new Date().getFullYear();
   categories: Category[] = [];
+  settings: SystemSetting[] = [];
   showDropdown = false;
+  showContactDropdown = false;
   showMobileMenu = false;
   cartCount$: Observable<number>;
 
   constructor(
     private categoryService: CategoryService,
-    private cartService: CartService
+    private cartService: CartService,
+    private settingService: SettingService
   ) {
     this.cartCount$ = this.cartService.cartItems$.pipe(
       map(items => items.reduce((acc, item) => acc + item.quantity, 0))
@@ -128,6 +203,11 @@ export class UserLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.categoryService.getCategories().subscribe(data => this.categories = data);
+    this.settingService.getSettings().subscribe(data => this.settings = data);
+  }
+
+  getSettingValue(key: string): string {
+    return this.settings.find(s => s.key === key)?.value || '';
   }
 }
 
