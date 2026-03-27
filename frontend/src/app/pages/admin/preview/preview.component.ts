@@ -112,46 +112,57 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
             </div>
             
             <div class="bg-slate-50 rounded-2xl p-4 flex-1 border border-slate-100 min-h-[500px] overflow-y-auto custom-scrollbar">
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" 
+              <div class="flex flex-col gap-4" 
                    cdkDropList (cdkDropListDropped)="onDrop($event)">
                 
                 <div *ngFor="let img of preview.images; let i = index" 
                      cdkDrag
-                     class="relative group rounded-xl overflow-hidden aspect-square bg-white shadow-sm border-2 transition-all cursor-move touch-none"
-                     [ngClass]="mainImage === img ? 'border-brand-500 ring-4 ring-brand-50' : 'border-transparent hover:border-slate-300'">
+                     class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-100 group transition-all animate-slide-up shadow-sm">
                   
-                  <img [src]="getProxyUrl(img)" (error)="onImageError(i)" referrerpolicy="no-referrer" class="w-full h-full object-cover">
-                  
-                  <!-- Main Image Badge -->
-                  <div *ngIf="mainImage === img" class="absolute top-2 left-2 bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm z-10">
-                    Primary
+                  <!-- Drag Handle -->
+                  <div class="cursor-move text-slate-300 hover:text-slate-600 transition-colors" cdkDragHandle>
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                   </div>
 
-                  <!-- Drag Handle Anchor Icon -->
-                  <div class="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-md rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                  <!-- Preview -->
+                  <div class="w-20 h-20 rounded-xl bg-slate-50 overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm relative">
+                     <img [src]="getProxyUrl(img)" (error)="onImageError(i)" referrerpolicy="no-referrer" class="w-full h-full object-cover">
+                     
+                     <!-- Main Image Indicator -->
+                     <div *ngIf="mainImage === img" class="absolute top-1 left-1 bg-brand-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                       PRIMARY
+                     </div>
                   </div>
-                  
-                  <!-- Hover Controls overlay -->
-                  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                    <button *ngIf="mainImage !== img" (click)="setMain(img)" class="w-24 bg-white text-slate-900 text-xs font-bold py-1.5 rounded-full hover:bg-brand-50 transition-colors shadow-lg">
-                      Set Primary
-                    </button>
-                    <button (click)="removeImage(i)" class="w-24 bg-red-500 text-white text-xs font-bold py-1.5 rounded-full hover:bg-red-600 transition-colors shadow-lg">
-                      <svg class="w-3.5 h-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      Delete
+
+                  <div class="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p class="text-[10px] text-slate-400 font-mono truncate max-w-[150px] sm:max-w-[300px]">{{ img }}</p>
+                      <div class="mt-2 flex items-center gap-3">
+                        <button *ngIf="mainImage !== img" (click)="setMain(img)" 
+                                class="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest transition-colors">
+                          Set Primary
+                        </button>
+                        <span *ngIf="mainImage === img" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          Selected Cover
+                        </span>
+                      </div>
+                    </div>
+
+                    <button (click)="removeImage(i)" 
+                            class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all self-end sm:self-center">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   </div>
 
-                  <!-- Placeholder for Drag -->
-                  <div *cdkDragPlaceholder class="absolute inset-0 bg-slate-200 border-2 border-dashed border-slate-300 rounded-xl"></div>
+                  <!-- Drag Preview Placeholder -->
+                  <div *cdkDragPlaceholder class="h-24 bg-slate-100 border-2 border-dashed border-slate-200 rounded-2xl"></div>
                 </div>
 
               </div>
               
-              <div *ngIf="preview.images.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400">
+              <div *ngIf="preview.images.length === 0" class="h-full flex flex-col items-center justify-center text-slate-400 py-20">
                 <svg class="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                <p>No images remaining.</p>
+                <p class="font-medium">No images remaining in extraction.</p>
               </div>
             </div>
           </div>
