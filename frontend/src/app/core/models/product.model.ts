@@ -14,6 +14,7 @@ export interface Product {
   subCategoryId?: string;
   subCategoryName?: string;
   isFeatured: boolean;
+  sortOrder: number;
   images: ProductImage[];
 }
 

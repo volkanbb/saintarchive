@@ -45,6 +45,10 @@ export class ProductService {
     return this.http.delete<void>(`${this.API_URL}/${id}`);
   }
 
+  updateFeaturedOrder(productIds: string[]): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/update-order`, productIds);
+  }
+
   getProxyUrl(url: string | undefined): string {
     if (!url) return '';
     return `/api/Proxy/image?url=${encodeURIComponent(url)}`;

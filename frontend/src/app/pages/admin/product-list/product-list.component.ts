@@ -15,10 +15,16 @@ import { Product } from '../../../core/models/product.model';
           <h2 class="text-3xl font-display font-bold text-slate-900">Manage Products</h2>
           <p class="text-slate-500 mt-1">Review, edit, and delete your published products.</p>
         </div>
-        <a routerLink="/admin/import" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-          Import New
-        </a>
+        <div class="flex items-center gap-4">
+          <a routerLink="/admin/featured-sort" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+            Sort Featured
+          </a>
+          <a routerLink="/admin/import" class="px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            Import New
+          </a>
+        </div>
       </div>
 
       <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">

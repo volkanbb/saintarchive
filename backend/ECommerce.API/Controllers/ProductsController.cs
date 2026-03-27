@@ -65,6 +65,7 @@ public class ProductsController : ControllerBase
             .Include(p => p.SubCategory)
             .Include(p => p.Images)
             .Where(p => p.IsFeatured)
+            .OrderBy(p => p.SortOrder)
             .Select(p => new ProductDto
             {
                 Id = p.Id,
@@ -72,6 +73,7 @@ public class ProductsController : ControllerBase
                 Description = p.Description,
                 Price = p.Price,
                 IsFeatured = p.IsFeatured,
+                SortOrder = p.SortOrder,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 SubCategoryId = p.SubCategoryId,
@@ -243,6 +245,24 @@ public class ProductsController : ControllerBase
         if (product == null) return NotFound();
 
         _context.Products.Remove(product);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPut("update-order")]
+    public async Task<IActionResult> UpdateSortOrder([FromBody] List<Guid> productIds)
+    {
+        for (int i = 0; i < productIds.Count; i++)
+        {
+            var id = productIds[i];
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                product.SortOrder = i;
+            }
+        }
+
         await _context.SaveChangesAsync();
         return NoContent();
     }

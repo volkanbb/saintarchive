@@ -11,5 +11,6 @@ public class ProductDto
     public Guid? SubCategoryId { get; set; }
     public string? SubCategoryName { get; set; }
     public bool IsFeatured { get; set; }
+    public int SortOrder { get; set; }
     public List<ProductImageDto> Images { get; set; } = new();
 }
