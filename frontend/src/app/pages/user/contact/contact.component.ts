@@ -68,20 +68,20 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
             </div>
           </a>
 
-          <!-- Telegram Card -->
-          <a [href]="getSettingValue('TelegramUrl')" target="_blank"
-             class="group relative bg-[#0A0A0A] border border-white/5 p-10 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:border-blue-500/50 hover:shadow-[0_0_50px_rgba(59,130,246,0.1)]">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[80px] group-hover:bg-blue-500/20 transition-all"></div>
+          <!-- TikTok Card -->
+          <a [href]="getSettingValue('TikTokUrl')" target="_blank"
+             class="group relative bg-[#0A0A0A] border border-white/5 p-10 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:border-cyan-500/50 hover:shadow-[0_0_50px_rgba(6,182,212,0.1)]">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[80px] group-hover:bg-cyan-500/20 transition-all"></div>
             
             <div class="flex flex-col h-full justify-between gap-12 relative z-10">
               <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0C5.347 0 0 5.347 0 11.944c0 6.597 5.347 11.944 11.944 11.944 6.597 0 11.944-5.347 11.944-11.944C23.888 5.347 18.541 0 11.944 0zm5.631 8.271l-1.921 9.062c-.144.646-.525.803-1.063.501l-2.924-2.155-1.411 1.358c-.156.156-.287.287-.588.287l.21-2.978 5.419-4.895c.235-.209-.052-.326-.366-.117l-6.696 4.215-2.886-.9c-.627-.196-.64-.627.13-.93l11.282-4.348c.523-.196.979.117.814.864z"/></svg>
+                <svg class="w-6 h-6 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.74.02 1.48-.04 2.94-.04 4.42-.7-.32-1.48-.47-2.26-.39-.8.04-1.6.35-2.2.88-.56.49-.91 1.15-1.01 1.88-.1.62-.01 1.27.24 1.85.25.58.7 1.05 1.25 1.35.89.48 1.95.49 2.84.02.65-.33 1.16-.88 1.48-1.52.22-.51.3-1.07.29-1.63V.02z"/></svg>
               </div>
               <div>
-                <h2 class="text-2xl font-bold mb-2">TELEGRAM</h2>
-                <p class="text-sm text-slate-500 font-medium">Private drops & news.</p>
-                <div class="mt-6 flex items-center gap-2 text-blue-500 font-black text-[10px] tracking-widest uppercase group-hover:gap-4 transition-all">
-                  JOIN CHANNEL <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                <h2 class="text-2xl font-bold mb-2">TIKTOK</h2>
+                <p class="text-sm text-slate-500 font-medium">Archive in motion.</p>
+                <div class="mt-6 flex items-center gap-2 text-cyan-400 font-black text-[10px] tracking-widest uppercase group-hover:gap-4 transition-all">
+                  WATCH CLIPS <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </div>
               </div>
             </div>
@@ -90,18 +90,12 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
         </div>
 
         <!-- Info Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-white/5 pt-20">
+        <div class="grid grid-cols-1 gap-8 border-t border-white/5 pt-20">
             <div class="space-y-6">
                 <h3 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">OFFICIAL EMAIL</h3>
                 <a [href]="'mailto:' + getSettingValue('ContactEmail')" class="text-3xl font-display font-medium hover:text-brand-400 transition-colors">
                     {{ getSettingValue('ContactEmail') }}
                 </a>
-            </div>
-            <div class="space-y-6">
-                <h3 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">LOCATION</h3>
-                <p class="text-3xl font-display font-medium">
-                    {{ getSettingValue('StoreAddress') }}
-                </p>
             </div>
         </div>
 

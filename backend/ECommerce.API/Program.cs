@@ -173,10 +173,18 @@ using (var scope = app.Services.CreateScope())
             {
                 new SystemSetting { Key = "WhatsAppNumber", Value = "33612345678", Description = "Store contact WhatsApp number (International format without +)" },
                 new SystemSetting { Key = "InstagramUrl", Value = "https://instagram.com/saintarchive", Description = "Instagram profile URL" },
-                new SystemSetting { Key = "TelegramUrl", Value = "https://t.me/saintarchive", Description = "Telegram channel or support URL" },
-                new SystemSetting { Key = "ContactEmail", Value = "info@saintarchive.com.tr", Description = "Public contact email address" },
-                new SystemSetting { Key = "StoreAddress", Value = "Istanbul, Turkey", Description = "Physical store address or location info" }
+                new SystemSetting { Key = "TikTokUrl", Value = "https://tiktok.com/@saintarchive", Description = "TikTok profile URL" },
+                new SystemSetting { Key = "ContactEmail", Value = "info@saintarchive.com.tr", Description = "Public contact email address" }
             };
+
+            // Remove deprecated settings
+            var deprecatedKeys = new[] { "TelegramUrl", "StoreAddress" };
+            var deprecatedSettings = db.SystemSettings.Where(s => deprecatedKeys.Contains(s.Key)).ToList();
+            if (deprecatedSettings.Any())
+            {
+                db.SystemSettings.RemoveRange(deprecatedSettings);
+                logger.LogInformation("Removed deprecated Telegram and Address settings.");
+            }
 
             foreach (var setting in defaultSettings)
             {

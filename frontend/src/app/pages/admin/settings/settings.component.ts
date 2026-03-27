@@ -44,7 +44,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
               </div>
             </div>
 
-            <!-- Email & Address -->
+            <!-- Email -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start pb-10 border-b border-slate-100">
               <div class="space-y-2">
                 <h3 class="text-lg font-bold text-slate-900">Store Info</h3>
@@ -55,16 +55,6 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact Email</label>
                     <div class="flex gap-4">
                         <input type="email" [(ngModel)]="s.value" placeholder="e.g. info@saintarchive.com.tr"
-                               class="flex-1 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm">
-                        <button (click)="saveSetting(s)" class="p-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-all">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="space-y-4" *ngIf="getSetting('StoreAddress') as s">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Physical Address / Location</label>
-                    <div class="flex gap-4">
-                        <input type="text" [(ngModel)]="s.value" placeholder="e.g. Istanbul, Turkey"
                                class="flex-1 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm">
                         <button (click)="saveSetting(s)" class="p-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-all">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -91,10 +81,10 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
                         </button>
                     </div>
                 </div>
-                <div class="space-y-4" *ngIf="getSetting('TelegramUrl') as s">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Telegram Channel/Support URL</label>
+                <div class="space-y-4" *ngIf="getSetting('TikTokUrl') as s">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">TikTok Profile URL</label>
                     <div class="flex gap-4">
-                        <input type="text" [(ngModel)]="s.value" placeholder="https://t.me/..."
+                        <input type="text" [(ngModel)]="s.value" placeholder="https://tiktok.com/@..."
                                class="flex-1 px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm">
                         <button (click)="saveSetting(s)" class="p-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl transition-all">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
