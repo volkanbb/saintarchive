@@ -24,9 +24,6 @@ import { Observable } from 'rxjs';
           <div class="absolute inset-0 bg-gradient-to-r from-[#c5a059] to-red-600 animate-loading-bar"></div>
         </div>
 
-        <p class="mt-4 text-[10px] tracking-[0.5em] text-[#c5a059] uppercase font-bold animate-fade-pulse">
-            AUTHENTICATING ARCHIVE...
-        </p>
       </div>
 
       <!-- Grunge Background Texture Overlay -->
