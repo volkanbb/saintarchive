@@ -103,7 +103,7 @@ export class RegisterComponent {
   onSubmit() {
     this.authService.register({ fullName: this.fullName, email: this.email, password: this.password }).subscribe({
       next: () => this.router.navigate(['/login']),
-      error: (err) => alert('Registration failed. Please try again.')
+      error: (err: any) => alert('Registration failed. Please try again.')
     });
   }
 }

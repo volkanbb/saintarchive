@@ -98,7 +98,7 @@ export class LoginComponent {
         if (res.role === 'Admin') this.router.navigate(['/admin/categories']);
         else this.router.navigate(['/']);
       },
-      error: (err) => alert('Login failed, please check credentials.')
+      error: (err: any) => alert('Login failed, please check credentials.')
     });
   }
 }

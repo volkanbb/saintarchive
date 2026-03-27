@@ -2,13 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
-
-export interface AuthResponse {
-  token: string;
-  email: string;
-  fullName: string;
-  role: string;
-}
+import { AuthResponse } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +23,10 @@ export class AuthService {
         this.currentUserSubject.next(response);
       })
     );
+  }
+
+  register(userData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/register`, userData);
   }
 
   logout(): void {
