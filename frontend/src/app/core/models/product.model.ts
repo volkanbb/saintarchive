@@ -16,3 +16,10 @@ export interface Product {
   isFeatured: boolean;
   images: ProductImage[];
 }
+
+export interface ScrapedProductInfo {
+  title: string;
+  description: string;
+  url: string;
+  imageUrls: string[];
+}

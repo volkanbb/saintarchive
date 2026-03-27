@@ -1,15 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product } from '../models/product.model';
+import { Product, ScrapedProductInfo } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
   private readonly API_URL = '/api/products';
+  private readonly IMPORT_URL = '/api/import';
 
   constructor(private http: HttpClient) {}
+
+  scrapeYupooAlbum(url: string): Observable<ScrapedProductInfo> {
+    return this.http.get<ScrapedProductInfo>(`${this.IMPORT_URL}/scrape-album?url=${encodeURIComponent(url)}`);
+  }
 
   getProducts(search?: string): Observable<Product[]> {
     const url = search ? `${this.API_URL}?search=${encodeURIComponent(search)}` : this.API_URL;

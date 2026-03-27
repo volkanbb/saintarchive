@@ -24,6 +24,24 @@ public class ImportController : ControllerBase
         _scopeFactory = scopeFactory;
     }
 
+    [HttpGet("scrape-album")]
+    public async Task<IActionResult> ScrapeAlbum([FromQuery] string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return BadRequest("URL is required");
+        try
+        {
+            var result = await _scraperService.ScrapeProductAsync(url);
+            if (result == null || string.IsNullOrEmpty(result.Title))
+                return BadRequest("Could not find product data at this URL.");
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Scraping failed: {ex.Message}");
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> PreviewImport([FromBody] string url)
     {

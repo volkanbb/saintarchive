@@ -25,6 +25,28 @@ import { Product } from '../../../core/models/product.model';
         </a>
       </div>
 
+      <!-- Quick Fetch from Yupoo -->
+      <div *ngIf="!isEdit" class="mb-10 p-6 bg-slate-100/50 border border-slate-200 border-dashed rounded-[2rem] animate-fade-in">
+        <div class="flex flex-col md:flex-row items-end gap-6">
+          <div class="flex-1 space-y-2">
+            <label class="text-[10px] font-black tracking-widest text-slate-400 uppercase">⚡ Quick Fetch from Yupoo</label>
+            <div class="relative">
+              <input type="text" [(ngModel)]="yupooUrl" placeholder="Enter Yupoo album URL (https://...)" 
+                     class="w-full px-6 py-4 rounded-2xl bg-white border border-slate-200 focus:border-brand-500 shadow-sm transition-all outline-none">
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101" /></svg>
+              </div>
+            </div>
+          </div>
+          <button type="button" (click)="fetchFromYupoo()" [disabled]="fetching || !yupooUrl"
+                  class="px-8 py-4 rounded-2xl bg-white border-2 border-slate-900 text-slate-900 font-black text-xs tracking-widest hover:bg-slate-900 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all uppercase flex items-center gap-3">
+            <span *ngIf="fetching" class="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+            {{ fetching ? 'Fetching Media...' : 'Magic Fetch' }}
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 mt-3 ml-1 italic">Automatically fills title and high-res images from any Yupoo album link.</p>
+      </div>
+
       <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-8">
         <!-- Basic Info Section -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 space-y-6">
@@ -145,6 +167,10 @@ export class ProductFormComponent implements OnInit {
   productId: string | null = null;
   productTitle = '';
   loading = false;
+  
+  // Yupoo Fetching
+  yupooUrl = '';
+  fetching = false;
 
   constructor(
     private fb: FormBuilder,
@@ -184,6 +210,40 @@ export class ProductFormComponent implements OnInit {
       // Add one empty image for convenience
       this.addImage(true);
     }
+  }
+
+  fetchFromYupoo() {
+    if (!this.yupooUrl || !this.yupooUrl.includes('yupoo.com')) {
+      alert('Please enter a valid Yupoo album URL.');
+      return;
+    }
+
+    this.fetching = true;
+    this.productService.scrapeYupooAlbum(this.yupooUrl).subscribe({
+      next: (data) => {
+        this.productForm.patchValue({
+          title: data.title,
+          description: data.description || ''
+        });
+
+        // Clear existing images and add new ones
+        this.images.clear();
+        data.imageUrls.forEach((url, index) => {
+          this.images.push(this.fb.group({
+            url: [url, Validators.required],
+            isMain: [index === 0]
+          }));
+        });
+
+        this.fetching = false;
+        this.yupooUrl = ''; // Clear after success
+      },
+      error: (err) => {
+        this.fetching = false;
+        console.error('Fetch failed', err);
+        alert(err.error || 'Failed to fetch product data from Yupoo.');
+      }
+    });
   }
 
   onCategoryChange(resetSub = true) {
