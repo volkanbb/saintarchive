@@ -34,4 +34,8 @@ export class CategoryService {
   deleteCategory(id: string): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${id}`);
   }
+
+  bulkDeleteCategories(ids: string[]): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-delete`, ids);
+  }
 }

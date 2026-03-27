@@ -184,4 +184,14 @@ public class CategoriesController : ControllerBase
 
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-delete")]
+    public async Task<IActionResult> BulkDeleteCategories([FromBody] List<Guid> ids)
+    {
+        var categories = await _context.Categories.Where(c => ids.Contains(c.Id)).ToListAsync();
+        _context.Categories.RemoveRange(categories);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }

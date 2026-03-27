@@ -70,11 +70,46 @@ import { Category } from '../../../core/models/category.model';
         </form>
       </div>
 
+      <!-- Feedback Message -->
+      <div *ngIf="feedbackMessage" 
+           [ngClass]="feedbackMessage.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'"
+           class="mb-6 p-4 rounded-xl border flex items-center justify-between animate-slide-up">
+        <div class="flex items-center gap-3">
+            <svg *ngIf="feedbackMessage.type === 'success'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            <svg *ngIf="feedbackMessage.type === 'error'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span class="text-sm font-bold">{{ feedbackMessage.text }}</span>
+        </div>
+        <button (click)="feedbackMessage = null" class="opacity-50 hover:opacity-100 transition-opacity">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Bulk Actions Bar -->
+      <div *ngIf="selectedCategoryIds.size > 0" 
+           class="mb-6 p-4 bg-slate-900 rounded-2xl flex items-center justify-between shadow-xl shadow-slate-900/20 animate-slide-up">
+        <div class="flex items-center gap-4 px-2">
+            <span class="text-white font-black text-xs uppercase tracking-widest">{{ selectedCategoryIds.size }} Categories Selected</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button (click)="bulkDelete()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all flex items-center gap-2 font-bold text-[10px] uppercase tracking-wider">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Delete Selected
+            </button>
+            <button (click)="clearSelection()" class="p-2 text-slate-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+      </div>
+
       <!-- Categories Table -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table class="min-w-full divide-y divide-slate-200">
           <thead class="bg-slate-50">
             <tr>
+              <th class="pl-6 py-4 w-10">
+                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()"
+                       class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
+              </th>
               <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Hierarchy</th>
               <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Visual</th>
               <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
@@ -85,7 +120,11 @@ import { Category } from '../../../core/models/category.model';
           <tbody class="divide-y divide-slate-100 bg-white">
             <ng-container *ngFor="let cat of categories">
               <!-- Main Category -->
-              <tr class="hover:bg-slate-50 transition-colors group">
+              <tr class="hover:bg-slate-50 transition-colors group" [class.bg-brand-50]="selectedCategoryIds.has(cat.id)">
+                <td class="pl-6 py-4">
+                  <input type="checkbox" [checked]="selectedCategoryIds.has(cat.id)" (change)="toggleSelection(cat.id)"
+                         class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                    <span class="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full uppercase">Main</span>
                 </td>
@@ -115,7 +154,11 @@ import { Category } from '../../../core/models/category.model';
                 </td>
               </tr>
               <!-- Sub Categories (Indented) -->
-              <tr *ngFor="let sub of cat.subCategories" class="bg-slate-50/30 hover:bg-slate-50 transition-colors group border-l-4 border-slate-200">
+              <tr *ngFor="let sub of cat.subCategories" class="bg-slate-50/30 hover:bg-slate-50 transition-colors group border-l-4 border-slate-200" [class.bg-brand-50]="selectedCategoryIds.has(sub.id)">
+                <td class="pl-6 py-2">
+                  <input type="checkbox" [checked]="selectedCategoryIds.has(sub.id)" (change)="toggleSelection(sub.id)"
+                         class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
+                </td>
                 <td class="px-6 py-2 whitespace-nowrap pl-10">
                    <span class="text-[9px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full uppercase border border-slate-200">Sub</span>
                 </td>
@@ -140,7 +183,7 @@ import { Category } from '../../../core/models/category.model';
               </tr>
             </ng-container>
             <tr *ngIf="categories.length === 0">
-              <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+              <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                 <p>No categories found.</p>
               </td>
             </tr>
@@ -156,6 +199,8 @@ export class CategoriesComponent implements OnInit {
   subCategoryNames = '';
   editingCategory: Category | null = null;
   imageError = false;
+  selectedCategoryIds = new Set<string>();
+  feedbackMessage: { text: string; type: 'success' | 'error' } | null = null;
 
   constructor(
     private categoryService: CategoryService,
@@ -184,16 +229,31 @@ export class CategoriesComponent implements OnInit {
     };
 
     if (this.editingCategory) {
-      this.categoryService.updateCategory(this.editingCategory.id, payload as any).subscribe(() => {
-        this.loadCategories();
-        this.cancelEdit();
+      this.categoryService.updateCategory(this.editingCategory.id, payload as any).subscribe({
+        next: () => {
+          this.showFeedback('Category updated successfully!', 'success');
+          this.loadCategories();
+          this.cancelEdit();
+        },
+        error: () => this.showFeedback('Failed to update category.', 'error')
       });
     } else {
-      this.categoryService.createCategory(payload).subscribe(() => {
-        this.loadCategories();
-        this.resetForm();
+      this.categoryService.createCategory(payload).subscribe({
+        next: () => {
+          this.showFeedback('Category created successfully!', 'success');
+          this.loadCategories();
+          this.resetForm();
+        },
+        error: () => this.showFeedback('Failed to create category.', 'error')
       });
     }
+  }
+
+  showFeedback(text: string, type: 'success' | 'error') {
+    this.feedbackMessage = { text, type };
+    setTimeout(() => {
+      if (this.feedbackMessage?.text === text) this.feedbackMessage = null;
+    }, 4000);
   }
 
   startEdit(cat: Category) {
@@ -235,5 +295,48 @@ export class CategoriesComponent implements OnInit {
   getProxyUrl(url: string | undefined): string {
     if (!url) return '';
     return this.productService.getProxyUrl(url);
+  }
+
+  toggleSelection(id: string) {
+    if (this.selectedCategoryIds.has(id)) {
+      this.selectedCategoryIds.delete(id);
+    } else {
+      this.selectedCategoryIds.add(id);
+    }
+  }
+
+  toggleSelectAll() {
+    if (this.isAllSelected()) {
+      this.selectedCategoryIds.clear();
+    } else {
+      this.categories.forEach(cat => {
+        this.selectedCategoryIds.add(cat.id);
+        cat.subCategories?.forEach(sub => this.selectedCategoryIds.add(sub.id));
+      });
+    }
+  }
+
+  isAllSelected(): boolean {
+    let totalCount = this.categories.length;
+    this.categories.forEach(c => totalCount += (c.subCategories?.length || 0));
+    return totalCount > 0 && this.selectedCategoryIds.size === totalCount;
+  }
+
+  clearSelection() {
+    this.selectedCategoryIds.clear();
+  }
+
+  bulkDelete() {
+    if (confirm(`Are you sure you want to delete ${this.selectedCategoryIds.size} categories/sub-categories?`)) {
+      const ids = Array.from(this.selectedCategoryIds);
+      this.categoryService.bulkDeleteCategories(ids).subscribe({
+        next: () => {
+          this.showFeedback('Selected categories deleted successfully!', 'success');
+          this.selectedCategoryIds.clear();
+          this.loadCategories();
+        },
+        error: () => this.showFeedback('Failed to delete selected categories.', 'error')
+      });
+    }
   }
 }
