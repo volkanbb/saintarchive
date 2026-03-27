@@ -108,6 +108,9 @@ namespace ECommerce.Persistence.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("SubCategoryId")
                         .HasColumnType("uuid");
 
