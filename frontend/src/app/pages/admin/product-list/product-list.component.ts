@@ -58,10 +58,8 @@ import { Product, Size } from '../../../core/models/product.model';
                            class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
                 </th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Product</th>
-                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Category</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Sizes</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
-                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Featured</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
@@ -81,22 +79,16 @@ import { Product, Size } from '../../../core/models/product.model';
                     </div>
                     <div>
                       <div class="font-semibold text-slate-900 line-clamp-1">{{product.title}}</div>
-                      <div class="text-xs text-slate-500 font-mono mt-0.5">ID: {{product.id.substring(0,8)}}</div>
+                      <div class="text-xs text-slate-500 font-mono mt-0.5">{{product.categoryName}}</div>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600">{{product.categoryName}}</td>
                 <td class="px-6 py-4">
                   <div class="flex flex-wrap gap-1 max-w-[200px]">
-                    <span *ngFor="let s of product.sizes" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">{{s.name}}</span>
-                    <span *ngIf="product.sizes.length === 0" class="text-slate-300 text-[10px] italic">No sizes</span>
+                    <span *ngFor="let s of product.sizes" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase">{{s.name}}</span>
                   </div>
                 </td>
                 <td class="px-6 py-4 font-mono font-bold text-slate-900 text-sm">₺{{product.price | number:'1.2-2'}}</td>
-                <td class="px-6 py-4 text-center">
-                  <input type="checkbox" [checked]="product.isFeatured" (change)="toggleIsFeatured(product)"
-                         class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
-                </td>
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
                     <a [routerLink]="['/admin/products/edit', product.id]" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Edit Product">
@@ -111,14 +103,6 @@ import { Product, Size } from '../../../core/models/product.model';
             </tbody>
           </table>
         </div>
-        
-        <div *ngIf="products.length === 0" class="py-20 text-center">
-          <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-            <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-3.586a1 1 0 00-.707.293l-1.414 1.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-1.414-1.414A1 1 0 009.586 13H4" /></svg>
-          </div>
-          <h3 class="text-lg font-medium text-slate-900">No products found</h3>
-          <p class="text-slate-500 mt-1">Import some products to get started.</p>
-        </div>
       </div>
     </div>
 
@@ -132,11 +116,12 @@ import { Product, Size } from '../../../core/models/product.model';
             <div class="p-8 max-h-[400px] overflow-y-auto">
                 <div class="grid grid-cols-3 gap-3">
                     <button *ngFor="let size of availableSizes" 
+                            type="button"
                             (click)="toggleSizeInBulk(size.id)"
                             [class.bg-slate-900]="selectedSizeIdsForBulk.has(size.id)"
                             [class.text-white]="selectedSizeIdsForBulk.has(size.id)"
                             [class.border-slate-900]="selectedSizeIdsForBulk.has(size.id)"
-                            class="px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold transition-all hover:border-slate-900 active:scale-95">
+                            class="px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold transition-all hover:border-slate-900 active:scale-95 uppercase">
                         {{ size.name }}
                     </button>
                 </div>
