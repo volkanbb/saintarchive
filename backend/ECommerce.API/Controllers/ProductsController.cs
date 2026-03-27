@@ -18,7 +18,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetProducts([FromQuery] string? search)
+    public async Task<IActionResult> GetProducts([FromQuery] string? search, [FromQuery] Guid? categoryId, [FromQuery] Guid? subCategoryId)
     {
         var query = _context.Products
             .Include(p => p.Category)
@@ -29,6 +29,15 @@ public class ProductsController : ControllerBase
         if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(p => p.Title.Contains(search));
+        }
+
+        if (subCategoryId.HasValue)
+        {
+            query = query.Where(p => p.SubCategoryId == subCategoryId.Value);
+        }
+        else if (categoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == categoryId.Value);
         }
 
         var products = await query

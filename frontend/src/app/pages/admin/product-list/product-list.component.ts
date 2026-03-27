@@ -2,14 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { Product, Size } from '../../../core/models/product.model';
+import { Category } from '../../../core/models/category.model';
+import { FormsModule } from '@angular/forms';
 import { BulkEditImagesModalComponent } from './bulk-edit-images-modal.component';
 import { BulkEditCategoriesModalComponent } from './bulk-edit-categories-modal.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, BulkEditImagesModalComponent, BulkEditCategoriesModalComponent],
+  imports: [CommonModule, RouterLink, BulkEditImagesModalComponent, BulkEditCategoriesModalComponent, FormsModule],
   template: `
     <div class="animate-fade-in pb-20">
       <div class="flex items-center justify-between mb-8">
@@ -26,6 +29,30 @@ import { BulkEditCategoriesModalComponent } from './bulk-edit-categories-modal.c
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
             Import New
           </a>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 mb-8 p-4 bg-white rounded-2xl border border-slate-200">
+        <div class="flex-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Main Category</label>
+          <select [(ngModel)]="selectedCategoryId" (change)="onCategoryChange()" 
+                  class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500 transition-all cursor-pointer">
+            <option [value]="''">All Categories</option>
+            <option *ngFor="let cat of allCategories" [value]="cat.id">{{cat.name}}</option>
+          </select>
+        </div>
+        <div class="flex-1" *ngIf="getSelectedCategorySubCategories().length > 0 || selectedSubCategoryId">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Sub Category</label>
+          <select [(ngModel)]="selectedSubCategoryId" (change)="onSubCategoryChange()"
+                  class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500 transition-all cursor-pointer">
+            <option [value]="''">All Sub-Categories</option>
+            <option *ngFor="let sub of getSelectedCategorySubCategories()" [value]="sub.id">{{sub.name}}</option>
+          </select>
+        </div>
+        <div class="w-10 flex items-end justify-center pb-2">
+            <button *ngIf="selectedCategoryId || selectedSubCategoryId" (click)="clearFilters()" class="text-slate-300 hover:text-red-500 transition-colors" title="Clear Filters">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
         </div>
       </div>
 
@@ -175,16 +202,24 @@ export class ProductListComponent implements OnInit {
 
   showBulkImageModal = false;
   showBulkCategoryModal = false;
+  
+  allCategories: Category[] = [];
+  selectedCategoryId: string = '';
+  selectedSubCategoryId: string = '';
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private productService: ProductService,
+    private categoryService: CategoryService
+  ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.productService.getSizes().subscribe(data => this.availableSizes = data);
+    this.categoryService.getCategories().subscribe(data => this.allCategories = data);
   }
 
   loadProducts() {
-    this.productService.getProducts().subscribe(data => {
+    this.productService.getProducts(undefined, this.selectedCategoryId || undefined, this.selectedSubCategoryId || undefined).subscribe(data => {
       this.products = data;
     });
   }
@@ -310,5 +345,25 @@ export class ProductListComponent implements OnInit {
 
   getSelectedProductIdsArray(): string[] {
     return Array.from(this.selectedProductIds);
+  }
+
+  onCategoryChange() {
+    this.selectedSubCategoryId = '';
+    this.loadProducts();
+  }
+
+  onSubCategoryChange() {
+    this.loadProducts();
+  }
+
+  getSelectedCategorySubCategories(): Category[] {
+    const cat = this.allCategories.find(c => c.id === this.selectedCategoryId);
+    return cat?.subCategories || [];
+  }
+
+  clearFilters() {
+    this.selectedCategoryId = '';
+    this.selectedSubCategoryId = '';
+    this.loadProducts();
   }
 }

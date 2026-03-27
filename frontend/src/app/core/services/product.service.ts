@@ -16,8 +16,18 @@ export class ProductService {
     return this.http.get<ScrapedProductInfo>(`${this.IMPORT_URL}/scrape-album?url=${encodeURIComponent(url)}`);
   }
 
-  getProducts(search?: string): Observable<Product[]> {
-    const url = search ? `${this.API_URL}?search=${encodeURIComponent(search)}` : this.API_URL;
+  getProducts(search?: string, categoryId?: string, subCategoryId?: string): Observable<Product[]> {
+    let url = this.API_URL;
+    const params = [];
+    
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (categoryId) params.push(`categoryId=${categoryId}`);
+    if (subCategoryId) params.push(`subCategoryId=${subCategoryId}`);
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    
     return this.http.get<Product[]>(url);
   }
 
