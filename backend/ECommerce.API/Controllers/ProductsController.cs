@@ -73,6 +73,7 @@ public class ProductsController : ControllerBase
     [HttpGet("featured")]
     public async Task<IActionResult> GetFeaturedProducts()
     {
+        var products = await _context.Products
             .Include(p => p.Category)
             .Include(p => p.SubCategory)
             .Include(p => p.Images)
