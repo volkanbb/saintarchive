@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/category.model';
-import { Product } from '../../../core/models/product.model';
+import { Product, Size } from '../../../core/models/product.model';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
@@ -88,6 +88,23 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
             <textarea formControlName="description" rows="5" placeholder="Detailed product description..."
                       class="w-full px-5 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all outline-none resize-none"></textarea>
           </div>
+        </div>
+
+        <!-- Sizes Section -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">Available Sizes</h3>
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                <button *ngFor="let size of availableSizes" 
+                        type="button"
+                        (click)="toggleSize(size)"
+                        [class.bg-slate-900]="isSizeSelected(size.id)"
+                        [class.text-white]="isSizeSelected(size.id)"
+                        [class.border-slate-900]="isSizeSelected(size.id)"
+                        class="px-4 py-3 rounded-xl border border-slate-200 text-xs font-bold transition-all hover:border-slate-900 active:scale-95 uppercase tracking-widest">
+                    {{ size.name }}
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mt-4 italic">Select the sizes available for this specific product.</p>
         </div>
 
         <!-- Images Section -->
@@ -182,6 +199,8 @@ export class ProductFormComponent implements OnInit {
   productId: string | null = null;
   productTitle = '';
   loading = false;
+  availableSizes: Size[] = [];
+  selectedSizes: Size[] = [];
   
   // Yupoo Fetching
   yupooUrl = '';
@@ -200,6 +219,7 @@ export class ProductFormComponent implements OnInit {
       price: [0, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
       subCategoryId: [null],
+      sizes: [[]],
       images: this.fb.array([])
     });
   }
@@ -214,6 +234,10 @@ export class ProductFormComponent implements OnInit {
       if (this.isEdit && this.productForm.get('categoryId')?.value) {
         this.onCategoryChange(false);
       }
+    });
+
+    this.productService.getSizes().subscribe(data => {
+        this.availableSizes = data;
     });
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -281,8 +305,11 @@ export class ProductFormComponent implements OnInit {
           description: product.description,
           price: product.price,
           categoryId: product.categoryId,
-          subCategoryId: product.subCategoryId
+          subCategoryId: product.subCategoryId,
+          sizes: product.sizes || []
         });
+
+        this.selectedSizes = product.sizes || [];
 
         if (this.categories.length > 0) {
           this.onCategoryChange(false);
@@ -338,6 +365,20 @@ export class ProductFormComponent implements OnInit {
 
   getProxyUrl(url: string | undefined): string {
     return this.productService.getProxyUrl(url);
+  }
+
+  isSizeSelected(sizeId: string): boolean {
+    return this.selectedSizes.some(s => s.id === sizeId);
+  }
+
+  toggleSize(size: Size) {
+    const index = this.selectedSizes.findIndex(s => s.id === size.id);
+    if (index > -1) {
+      this.selectedSizes.splice(index, 1);
+    } else {
+      this.selectedSizes.push(size);
+    }
+    this.productForm.patchValue({ sizes: this.selectedSizes });
   }
 
   onSubmit() {

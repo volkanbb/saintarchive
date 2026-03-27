@@ -46,16 +46,19 @@ import { Observable } from 'rxjs';
                     <!-- Details -->
                     <div class="flex-1 min-w-0">
                         <h3 class="text-white font-black uppercase tracking-tight truncate text-lg">{{ item.product.title }}</h3>
-                        <p class="text-[#c5a059] font-bold text-sm tracking-widest mt-1">{{ item.product.price | number:'1.0-0' }} ₺</p>
+                        <div class="flex items-center gap-3 mt-1">
+                            <p class="text-[#c5a059] font-bold text-sm tracking-widest">{{ item.product.price | number:'1.0-0' }} ₺</p>
+                            <span *ngIf="item.size" class="px-2 py-0.5 bg-white/5 border border-white/10 text-white/40 text-[9px] font-black uppercase tracking-widest">{{ item.size }}</span>
+                        </div>
                     </div>
 
                     <!-- Quantity Controls -->
                     <div class="flex items-center bg-black/40 border border-white/5 p-1">
-                        <button (click)="updateQuantity(item.product.id, item.quantity - 1)" class="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white transition-colors">
+                        <button (click)="updateQuantity(item.product.id, item.quantity - 1, item.size)" class="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
                         </button>
                         <span class="w-8 text-center text-white font-bold text-xs">{{ item.quantity }}</span>
-                        <button (click)="updateQuantity(item.product.id, item.quantity + 1)" class="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white transition-colors">
+                        <button (click)="updateQuantity(item.product.id, item.quantity + 1, item.size)" class="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                         </button>
                     </div>
@@ -66,7 +69,7 @@ import { Observable } from 'rxjs';
                     </div>
 
                     <!-- Remove -->
-                    <button (click)="removeItem(item.product.id)" class="text-white/20 hover:text-red-500 transition-colors p-2">
+                    <button (click)="removeItem(item.product.id, item.size)" class="text-white/20 hover:text-red-500 transition-colors p-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
@@ -118,12 +121,12 @@ export class CartComponent implements OnInit {
     });
   }
 
-  updateQuantity(productId: string, quantity: number) {
-    this.cartService.updateQuantity(productId, quantity);
+  updateQuantity(productId: string, quantity: number, size?: string) {
+    this.cartService.updateQuantity(productId, quantity, size);
   }
 
-  removeItem(productId: string) {
-    this.cartService.removeFromCart(productId);
+  removeItem(productId: string, size?: string) {
+    this.cartService.removeFromCart(productId, size);
   }
 
   clearCart() {
@@ -148,7 +151,8 @@ export class CartComponent implements OnInit {
     message += `----------------------------------\n`;
     
     items.forEach((item, index) => {
-      message += `${index + 1}. *${item.product.title}*\n`;
+      const sizeStr = item.size ? ` [Beden: *${item.size}*]` : '';
+      message += `${index + 1}. *${item.product.title}*${sizeStr}\n`;
       message += `   Adet: ${item.quantity} | Fiyat: ${item.product.price * item.quantity} ₺\n`;
     });
  

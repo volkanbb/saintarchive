@@ -11,6 +11,7 @@ public interface IAppDbContext
     DbSet<TempImportedProduct> TempImportedProducts { get; set; }
     DbSet<SystemSetting> SystemSettings { get; set; }
     DbSet<YupooScrapeTask> YupooScrapeTasks { get; set; }
+    DbSet<Size> Sizes { get; set; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

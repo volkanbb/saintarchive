@@ -23,6 +23,7 @@ public class ProductsController : ControllerBase
         var query = _context.Products
             .Include(p => p.Category)
             .Include(p => p.Images)
+            .Include(p => p.Sizes)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -38,6 +39,7 @@ public class ProductsController : ControllerBase
                 Description = p.Description,
                 Price = p.Price,
                 IsFeatured = p.IsFeatured,
+                SortOrder = p.SortOrder,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 SubCategoryId = p.SubCategoryId,
@@ -50,20 +52,31 @@ public class ProductsController : ControllerBase
                         Id = i.Id,
                         Url = i.Url,
                         IsMain = i.IsMain
-                    }).ToList()
+                    }).ToList(),
+                Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
             .ToListAsync();
 
         return Ok(products);
     }
 
+    [HttpGet("sizes")]
+    public async Task<IActionResult> GetSizes()
+    {
+        var sizes = await _context.Sizes
+            .OrderBy(s => s.Name)
+            .Select(s => new SizeDto { Id = s.Id, Name = s.Name })
+            .ToListAsync();
+        return Ok(sizes);
+    }
+
     [HttpGet("featured")]
     public async Task<IActionResult> GetFeaturedProducts()
     {
-        var products = await _context.Products
             .Include(p => p.Category)
             .Include(p => p.SubCategory)
             .Include(p => p.Images)
+            .Include(p => p.Sizes)
             .Where(p => p.IsFeatured)
             .OrderBy(p => p.SortOrder)
             .Select(p => new ProductDto
@@ -86,7 +99,8 @@ public class ProductsController : ControllerBase
                         Id = i.Id,
                         Url = i.Url,
                         IsMain = i.IsMain
-                    }).ToList()
+                    }).ToList(),
+                Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
             .ToListAsync();
 
@@ -100,6 +114,7 @@ public class ProductsController : ControllerBase
             .Include(p => p.Category)
             .Include(p => p.SubCategory)
             .Include(p => p.Images)
+            .Include(p => p.Sizes)
             .Where(p => p.Id == id)
             .Select(p => new ProductDto
             {
@@ -108,6 +123,7 @@ public class ProductsController : ControllerBase
                 Description = p.Description,
                 Price = p.Price,
                 IsFeatured = p.IsFeatured,
+                SortOrder = p.SortOrder,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 SubCategoryId = p.SubCategoryId,
@@ -120,7 +136,8 @@ public class ProductsController : ControllerBase
                         Id = i.Id,
                         Url = i.Url,
                         IsMain = i.IsMain
-                    }).ToList()
+                    }).ToList(),
+                Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
             .FirstOrDefaultAsync();
 
@@ -136,6 +153,7 @@ public class ProductsController : ControllerBase
             .Include(p => p.Category)
             .Include(p => p.SubCategory)
             .Include(p => p.Images)
+            .Include(p => p.Sizes)
             .Where(p => p.CategoryId == categoryId || p.SubCategoryId == categoryId)
             .Select(p => new ProductDto
             {
@@ -144,6 +162,7 @@ public class ProductsController : ControllerBase
                 Description = p.Description,
                 Price = p.Price,
                 IsFeatured = p.IsFeatured,
+                SortOrder = p.SortOrder,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
                 SubCategoryId = p.SubCategoryId,
@@ -156,7 +175,8 @@ public class ProductsController : ControllerBase
                         Id = i.Id,
                         Url = i.Url,
                         IsMain = i.IsMain
-                    }).ToList()
+                    }).ToList(),
+                Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
             .ToListAsync();
 
@@ -179,6 +199,14 @@ public class ProductsController : ControllerBase
         product.IsFeatured = productDto.IsFeatured;
         product.CategoryId = productDto.CategoryId;
         product.SubCategoryId = productDto.SubCategoryId;
+
+        // Update Sizes
+        if (productDto.Sizes != null)
+        {
+            var sizeIds = productDto.Sizes.Select(s => s.Id).ToList();
+            var sizes = await _context.Sizes.Where(s => sizeIds.Contains(s.Id)).ToListAsync();
+            product.Sizes = sizes;
+        }
 
         if (productDto.Images != null && productDto.Images.Any())
         {
@@ -214,6 +242,13 @@ public class ProductsController : ControllerBase
             CategoryId = productDto.CategoryId,
             SubCategoryId = productDto.SubCategoryId
         };
+
+        if (productDto.Sizes != null && productDto.Sizes.Any())
+        {
+            var sizeIds = productDto.Sizes.Select(s => s.Id).ToList();
+            var sizes = await _context.Sizes.Where(s => sizeIds.Contains(s.Id)).ToListAsync();
+            product.Sizes = sizes;
+        }
 
         _context.Products.Add(product);
 
@@ -266,4 +301,42 @@ public class ProductsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-delete")]
+    public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
+    {
+        var products = await _context.Products.Where(p => ids.Contains(p.Id)).ToListAsync();
+        _context.Products.RemoveRange(products);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-update-sizes")]
+    public async Task<IActionResult> BulkUpdateSizes([FromBody] BulkUpdateSizesRequest request)
+    {
+        var products = await _context.Products
+            .Include(p => p.Sizes)
+            .Where(p => request.ProductIds.Contains(p.Id))
+            .ToListAsync();
+
+        var sizes = await _context.Sizes
+            .Where(s => request.SizeIds.Contains(s.Id))
+            .ToListAsync();
+
+        foreach (var product in products)
+        {
+            product.Sizes = sizes;
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+}
+
+public class BulkUpdateSizesRequest
+{
+    public List<Guid> ProductIds { get; set; } = new();
+    public List<Guid> SizeIds { get; set; } = new();
 }

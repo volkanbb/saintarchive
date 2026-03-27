@@ -4,6 +4,11 @@ export interface ProductImage {
   isMain: boolean;
 }
 
+export interface Size {
+  id: string;
+  name: string;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -16,6 +21,7 @@ export interface Product {
   isFeatured: boolean;
   sortOrder: number;
   images: ProductImage[];
+  sizes: Size[];
 }
 
 export interface ScrapedProductInfo {

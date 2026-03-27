@@ -200,6 +200,17 @@ using (var scope = app.Services.CreateScope())
             }
             db.SaveChanges();
 
+            // Seed Sizes
+            var defaultSizes = new[] { "S", "M", "L", "XL", "XXL", "36", "38", "40", "42", "44", "46" };
+            foreach (var sizeName in defaultSizes)
+            {
+                if (!db.Sizes.Any(s => s.Name == sizeName))
+                {
+                    db.Sizes.Add(new Size { Id = Guid.NewGuid(), Name = sizeName });
+                }
+            }
+            db.SaveChanges();
+
             break;
         }
         catch (Exception ex)

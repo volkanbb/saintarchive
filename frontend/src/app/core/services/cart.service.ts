@@ -35,35 +35,35 @@ export class CartService {
     }
   }
 
-  addToCart(product: Product, quantity: number = 1): void {
+  addToCart(product: Product, quantity: number = 1, size?: string): void {
     const items = [...this.cartItems.value];
-    const existingItem = items.find(i => i.product.id === product.id);
+    const existingItem = items.find(i => i.product.id === product.id && i.size === size);
 
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      items.push({ product, quantity });
+      items.push({ product, quantity, size });
     }
 
     this.saveCart(items);
   }
 
-  updateQuantity(productId: string, quantity: number): void {
+  updateQuantity(productId: string, quantity: number, size?: string): void {
     if (quantity <= 0) {
-      this.removeFromCart(productId);
+      this.removeFromCart(productId, size);
       return;
     }
 
     const items = [...this.cartItems.value];
-    const item = items.find(i => i.product.id === productId);
+    const item = items.find(i => i.product.id === productId && i.size === size);
     if (item) {
       item.quantity = quantity;
       this.saveCart(items);
     }
   }
 
-  removeFromCart(productId: string): void {
-    const items = this.cartItems.value.filter(i => i.product.id !== productId);
+  removeFromCart(productId: string, size?: string): void {
+    const items = this.cartItems.value.filter(i => !(i.product.id === productId && i.size === size));
     this.saveCart(items);
   }
 

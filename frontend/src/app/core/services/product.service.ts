@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product, ScrapedProductInfo } from '../models/product.model';
+import { Product, ScrapedProductInfo, Size } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -47,6 +47,18 @@ export class ProductService {
 
   updateFeaturedOrder(productIds: string[]): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/update-order`, productIds);
+  }
+
+  getSizes(): Observable<Size[]> {
+    return this.http.get<Size[]>(`${this.API_URL}/sizes`);
+  }
+
+  bulkUpdateSizes(productIds: string[], sizeIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-update-sizes`, { productIds, sizeIds });
+  }
+
+  bulkDelete(productIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-delete`, productIds);
   }
 
   getProxyUrl(url: string | undefined): string {

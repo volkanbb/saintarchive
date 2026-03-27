@@ -101,6 +101,24 @@ import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
                     </div>
                 </div>
 
+                <!-- Size Selection -->
+                <div *ngIf="product.sizes && product.sizes.length > 0" class="space-y-6 pt-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[10px] font-black tracking-[0.4em] text-white/40 uppercase">BEDEN SEÇİN</h3>
+                        <span *ngIf="!selectedSize && showSizeError" class="text-red-500 text-[10px] font-bold uppercase tracking-widest animate-pulse">Lütfen beden seçiniz</span>
+                    </div>
+                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                        <button *ngFor="let size of product.sizes" 
+                                (click)="selectSize(size.name)"
+                                [class.border-[#c5a059]]="selectedSize === size.name"
+                                [class.text-[#c5a059]]="selectedSize === size.name"
+                                [class.bg-white/5]="selectedSize === size.name"
+                                class="h-12 border border-white/10 flex items-center justify-center text-xs font-bold text-white/60 hover:text-white hover:border-white/40 transition-all uppercase tracking-widest">
+                            {{ size.name }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Checkout / Action -->
                 <div class="pt-8 space-y-6">
                     <div class="flex items-center gap-4 mb-4">
@@ -146,6 +164,8 @@ export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
   mainImage: string = '';
   quantity: number = 1;
+  selectedSize: string | null = null;
+  showSizeError: boolean = false;
   whatsappNumber: string = '33612345678'; // Default fallback
 
   constructor(
@@ -228,17 +248,26 @@ export class ProductDetailComponent implements OnInit {
     }
   }
 
+  selectSize(size: string) {
+    this.selectedSize = size;
+    this.showSizeError = false;
+  }
+
   addToCart() {
     if (this.product) {
-      this.cartService.addToCart(this.product, this.quantity);
-      // Optional: Add a visual feedback/toast here
+      if (this.product.sizes && this.product.sizes.length > 0 && !this.selectedSize) {
+        this.showSizeError = true;
+        return;
+      }
+      this.cartService.addToCart(this.product, this.quantity, this.selectedSize || undefined);
     }
   }
 
   get whatsappLink(): SafeUrl {
     if (!this.product) return '';
     const priceSuffix = this.product.price > 0 ? ` [Fiyat: *₺${this.product.price}*]` : '';
-    const message = `Merhaba, şu ürün hakkında bilgi almak istiyorum: *${this.product.title}*${priceSuffix}\n\nStok durumu nedir?`;
+    const sizeSuffix = this.selectedSize ? ` [Beden: *${this.selectedSize}*]` : '';
+    const message = `Merhaba, şu ürün hakkında bilgi almak istiyorum: *${this.product.title}*${priceSuffix}${sizeSuffix}\n\nStok durumu nedir?`;
     const url = `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(message)}`;
     return this.sanitizer.bypassSecurityTrustUrl(url);
   }

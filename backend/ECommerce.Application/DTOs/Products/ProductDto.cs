@@ -13,4 +13,5 @@ public class ProductDto
     public bool IsFeatured { get; set; }
     public int SortOrder { get; set; }
     public List<ProductImageDto> Images { get; set; } = new();
+    public List<SizeDto> Sizes { get; set; } = new();
 }
