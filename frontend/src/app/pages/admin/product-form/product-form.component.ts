@@ -6,11 +6,12 @@ import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Category } from '../../../core/models/category.model';
 import { Product } from '../../../core/models/product.model';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-product-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink, DragDropModule],
   template: `
     <div class="animate-fade-in max-w-4xl mx-auto pb-12">
       <!-- Header -->
@@ -94,7 +95,7 @@ import { Product } from '../../../core/models/product.model';
           <div class="flex items-center justify-between mb-6">
             <div>
               <h3 class="text-lg font-bold text-slate-900">Product Images</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Add image URLs and select one as primary (Main).</p>
+              <p class="text-xs text-slate-500 mt-0.5">Drag to reorder. Add image URLs and select one as primary (Main).</p>
             </div>
             <button type="button" (click)="addImage()" 
                     class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-all flex items-center gap-2">
@@ -103,10 +104,16 @@ import { Product } from '../../../core/models/product.model';
             </button>
           </div>
 
-          <div formArrayName="images" class="space-y-4">
+          <div formArrayName="images" class="space-y-4" cdkDropList (cdkDropListDropped)="onDrop($event)">
             <div *ngFor="let img of images.controls; let i=index" [formGroupName]="i" 
-                 class="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group animate-slide-up">
+                 cdkDrag
+                 class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group transition-all animate-slide-up bg-white">
               
+              <!-- Drag Handle -->
+              <div class="cursor-move text-slate-300 hover:text-slate-600 transition-colors" cdkDragHandle>
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </div>
+
               <!-- Preview -->
               <div class="w-20 h-20 rounded-xl bg-white overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm relative">
                  <img *ngIf="img.get('url')?.value" [src]="getProxyUrl(img.get('url')?.value)" 
@@ -115,6 +122,11 @@ import { Product } from '../../../core/models/product.model';
                       class="w-full h-full object-cover">
                  <div *ngIf="!img.get('url')?.value" class="w-full h-full flex items-center justify-center text-slate-300">
                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                 </div>
+                 
+                 <!-- Main Image Indicator -->
+                 <div *ngIf="img.get('isMain')?.value" class="absolute top-1 left-1 bg-brand-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                   MAIN
                  </div>
               </div>
 
@@ -126,15 +138,18 @@ import { Product } from '../../../core/models/product.model';
                   <label class="flex items-center gap-2 cursor-pointer group/label">
                     <input type="radio" [value]="true" formControlName="isMain" (change)="onMainChange(i)"
                            class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
-                    <span class="text-xs font-semibold text-slate-600 group-hover/label:text-slate-900 transition-colors uppercase tracking-tight">Set as Primary Cover</span>
+                    <span class="text-xs font-semibold text-slate-600 group-hover/label:text-slate-900 transition-colors uppercase tracking-tight">Primary Cover</span>
                   </label>
                 </div>
               </div>
 
               <button type="button" (click)="removeImage(i)" 
-                      class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                       class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
+
+              <!-- Drag Preview -->
+              <div *cdkDragPlaceholder class="h-24 bg-slate-100 border-2 border-dashed border-slate-200 rounded-2xl"></div>
             </div>
           </div>
 
@@ -295,6 +310,17 @@ export class ProductFormComponent implements OnInit {
       url: ['', Validators.required],
       isMain: [isMain]
     }));
+  }
+
+  onDrop(event: CdkDragDrop<any>) {
+    const from = event.previousIndex;
+    const to = event.currentIndex;
+
+    if (from === to) return;
+
+    const control = this.images.at(from);
+    this.images.removeAt(from);
+    this.images.insert(to, control);
   }
 
   removeImage(index: number) {

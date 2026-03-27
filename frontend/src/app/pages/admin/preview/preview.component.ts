@@ -6,11 +6,12 @@ import { ImportService } from '../../../core/services/import.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { ImportPreview } from '../../../core/models/import.model';
 import { Category } from '../../../core/models/category.model';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-preview',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DragDropModule],
   template: `
     <div class="animate-fade-in pb-12" *ngIf="preview">
       
@@ -111,10 +112,12 @@ import { Category } from '../../../core/models/category.model';
             </div>
             
             <div class="bg-slate-50 rounded-2xl p-4 flex-1 border border-slate-100 min-h-[500px] overflow-y-auto custom-scrollbar">
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" 
+                   cdkDropList (cdkDropListDropped)="onDrop($event)">
                 
                 <div *ngFor="let img of preview.images; let i = index" 
-                     class="relative group rounded-xl overflow-hidden aspect-square bg-white shadow-sm border-2 transition-all cursor-pointer"
+                     cdkDrag
+                     class="relative group rounded-xl overflow-hidden aspect-square bg-white shadow-sm border-2 transition-all cursor-move touch-none"
                      [ngClass]="mainImage === img ? 'border-brand-500 ring-4 ring-brand-50' : 'border-transparent hover:border-slate-300'">
                   
                   <img [src]="getProxyUrl(img)" (error)="onImageError(i)" referrerpolicy="no-referrer" class="w-full h-full object-cover">
@@ -123,9 +126,14 @@ import { Category } from '../../../core/models/category.model';
                   <div *ngIf="mainImage === img" class="absolute top-2 left-2 bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-sm z-10">
                     Primary
                   </div>
+
+                  <!-- Drag Handle Anchor Icon -->
+                  <div class="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-md rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                  </div>
                   
                   <!-- Hover Controls overlay -->
-                  <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                     <button *ngIf="mainImage !== img" (click)="setMain(img)" class="w-24 bg-white text-slate-900 text-xs font-bold py-1.5 rounded-full hover:bg-brand-50 transition-colors shadow-lg">
                       Set Primary
                     </button>
@@ -134,6 +142,9 @@ import { Category } from '../../../core/models/category.model';
                       Delete
                     </button>
                   </div>
+
+                  <!-- Placeholder for Drag -->
+                  <div *cdkDragPlaceholder class="absolute inset-0 bg-slate-200 border-2 border-dashed border-slate-300 rounded-xl"></div>
                 </div>
 
               </div>
@@ -206,6 +217,12 @@ export class PreviewComponent implements OnInit {
     const category = this.categories.find(c => c.id === this.selectedCategory);
     this.subCategories = category?.subCategories || [];
     this.selectedSubCategory = '';
+  }
+
+  onDrop(event: CdkDragDrop<string[]>) {
+    if (this.preview) {
+      moveItemInArray(this.preview.images, event.previousIndex, event.currentIndex);
+    }
   }
 
   setMain(url: string) {
