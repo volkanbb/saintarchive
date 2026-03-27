@@ -1,7 +1,7 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --no-progress
+RUN npm install --legacy-peer-deps
 COPY . .
 ENV NODE_OPTIONS=--max-old-space-size=1536
 RUN npm run build -- --configuration production
