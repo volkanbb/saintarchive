@@ -38,4 +38,8 @@ export class CategoryService {
   bulkDeleteCategories(ids: string[]): Observable<void> {
     return this.http.post<void>(`${this.API_URL}/bulk-delete`, ids);
   }
+
+  bulkUpdateCategoryDetails(updates: any[]): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/bulk-update-details`, { items: updates });
+  }
 }

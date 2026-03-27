@@ -194,4 +194,35 @@ public class CategoriesController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("bulk-update-details")]
+    public async Task<IActionResult> BulkUpdateCategoryDetails([FromBody] BulkUpdateCategoryDetailsRequest request)
+    {
+        foreach (var item in request.Items)
+        {
+            var category = await _context.Categories.FindAsync(item.Id);
+            if (category != null)
+            {
+                category.Name = item.Name;
+                category.Description = item.Description;
+                category.Slug = item.Name.ToLower().Replace(" ", "-");
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+}
+
+public class BulkUpdateCategoryDetailsRequest
+{
+    public List<CategoryDetailUpdateItem> Items { get; set; } = new();
+}
+
+public class CategoryDetailUpdateItem
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }
