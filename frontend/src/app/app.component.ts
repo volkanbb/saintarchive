@@ -25,10 +25,15 @@ export class AppComponent implements OnInit {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
         this.loadingService.show();
+      } else if (event instanceof NavigationError) {
+        this.loadingService.hide();
+        // If navigation fails (e.g. lazy loading a chunk fails), it might be due to a Cloudflare challenge.
+        // Forcing a reload allows the browser to show the challenge page.
+        console.warn('Navigation error detected, potentially a Cloudflare block. Reloading...');
+        window.location.reload();
       } else if (
         event instanceof NavigationEnd ||
-        event instanceof NavigationCancel ||
-        event instanceof NavigationError
+        event instanceof NavigationCancel
       ) {
         this.loadingService.hide();
       }
