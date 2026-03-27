@@ -25,17 +25,16 @@ import { Category } from '../../../core/models/category.model';
         </span>
         
         <div class="relative mb-12 animate-slide-up" style="animation-delay: 0.1s;">
-          <h1 class="text-7xl md:text-9xl font-display font-extrabold tracking-tighter leading-none flex flex-col items-center">
+          <h1 class="text-7xl md:text-9xl font-display font-extrabold tracking-[0.1em] leading-none flex flex-col items-center">
             <span class="text-white">SAINT</span>
-            <span class="text-outline -mt-4 opacity-50">ARCHIVE</span>
+            <span class="text-outline -mt-4 opacity-50 tracking-[0.2em] relative left-[0.1em]">ARCHIVE</span>
           </h1>
         </div>
 
         <div class="flex flex-col items-center gap-6 animate-slide-up" style="animation-delay: 0.2s;">
-            <p class="text-[#c5a059] text-[10px] tracking-[0.3em] uppercase font-bold">KOLEKSİYON HAZIR</p>
             <button (click)="scrollToProducts()" class="btn-gold group">
                 ARCHIVE'E GİR
-                <span class="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                <span class="inline-block ml-2 group-hover:translate-y-1 transition-transform">↓</span>
             </button>
         </div>
       </div>
