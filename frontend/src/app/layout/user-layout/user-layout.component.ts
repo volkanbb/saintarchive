@@ -66,8 +66,10 @@ import { Observable, map } from 'rxjs';
             <!-- Contact Dropdown Content -->
             <div *ngIf="showContactDropdown" class="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-64">
               <div class="bg-[#0a0a0a]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                <!-- Social Channels Section Label -->
-                <div class="px-5 py-3 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] border-b border-white/5">Hızlı Erişim</div>
+                <a routerLink="/contact" 
+                   class="block px-5 py-3 text-sm text-[#c5a059] font-bold uppercase tracking-wider hover:bg-white/5 transition-colors border-b border-white/5">
+                  İletişim Sayfası
+                </a>
                 
                 <a [href]="'https://wa.me/' + getSettingValue('WhatsAppNumber')" target="_blank"
                    class="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:text-brand-400 hover:bg-white/5 transition-all group">
