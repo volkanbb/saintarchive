@@ -13,7 +13,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
         <!-- Breadcrumb / Label -->
         <div class="flex items-center gap-4 mb-8 opacity-50 font-black text-[10px] tracking-[0.3em] uppercase">
           <span class="w-12 h-[1px] bg-white"></span>
-          GET IN TOUCH
+          BİZE ULAŞIN
         </div>
 
         <!-- Main Header -->
@@ -23,7 +23,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-brand-600">ARCHIVE</span>
           </h1>
           <p class="mt-6 text-xl text-slate-400 font-medium max-w-2xl leading-relaxed">
-            Direct channels to our support team and social ecosystem. Explore our archive and connect with us globally.
+            Destek ekibimize ve sosyal medya ağımıza doğrudan kanallar. Arşivimizi keşfedin ve bizimle bağlantı kurun.
           </p>
         </div>
 
@@ -41,9 +41,9 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
               </div>
               <div>
                 <h2 class="text-2xl font-bold mb-2">WHATSAPP</h2>
-                <p class="text-sm text-slate-500 font-medium">Direct orders & inquiries.</p>
+                <p class="text-sm text-slate-500 font-medium">Doğrudan sipariş ve sorularınız için.</p>
                 <div class="mt-6 flex items-center gap-2 text-brand-400 font-black text-[10px] tracking-widest uppercase group-hover:gap-4 transition-all">
-                  CHAT NOW <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  WHATSAPP'TAN YAZIN <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </div>
               </div>
             </div>
@@ -60,9 +60,9 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
               </div>
               <div>
                 <h2 class="text-2xl font-bold mb-2">INSTAGRAM</h2>
-                <p class="text-sm text-slate-500 font-medium">Inside the archive.</p>
+                <p class="text-sm text-slate-500 font-medium">Arşivin derinliklerine göz atın.</p>
                 <div class="mt-6 flex items-center gap-2 text-pink-500 font-black text-[10px] tracking-widest uppercase group-hover:gap-4 transition-all">
-                  FOLLOW US <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  TAKİP EDİN <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </div>
               </div>
             </div>
@@ -79,9 +79,9 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
               </div>
               <div>
                 <h2 class="text-2xl font-bold mb-2">TIKTOK</h2>
-                <p class="text-sm text-slate-500 font-medium">Archive in motion.</p>
+                <p class="text-sm text-slate-500 font-medium">Arşiv hareket halinde.</p>
                 <div class="mt-6 flex items-center gap-2 text-cyan-400 font-black text-[10px] tracking-widest uppercase group-hover:gap-4 transition-all">
-                  WATCH CLIPS <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  İZLEMEYE BAŞLAYIN <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </div>
               </div>
             </div>
@@ -92,7 +92,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
         <!-- Info Grid -->
         <div class="grid grid-cols-1 gap-8 border-t border-white/5 pt-20">
             <div class="space-y-6">
-                <h3 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">OFFICIAL EMAIL</h3>
+                <h3 class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">RESMİ E-POSTA</h3>
                 <a [href]="'mailto:' + getSettingValue('ContactEmail')" class="text-3xl font-display font-medium hover:text-brand-400 transition-colors">
                     {{ getSettingValue('ContactEmail') }}
                 </a>
@@ -101,7 +101,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
 
         <!-- Footer Accent -->
         <div class="mt-32 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 opacity-30 text-[10px] font-black tracking-[0.5em] uppercase">
-            <span>AVAILABLE 24/7 GLOBALLY</span>
+            <span>7/24 KÜRESEL ERİŞİM</span>
             <span>SAINT ARCHIVE &copy; 2026</span>
         </div>
       </div>
