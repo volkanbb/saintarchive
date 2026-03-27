@@ -12,58 +12,7 @@ import { DomSanitizer, SafeUrl, Title, Meta } from '@angular/platform-browser';
   selector: 'app-product-detail',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <div class="bg-black min-h-screen pt-12 text-white" *ngIf="product">
-      <div class="max-w-7xl mx-auto px-4">
-        <h1 class="text-6xl font-black uppercase mb-6">{{product.title}}</h1>
-        <p class="text-4xl font-bold text-yellow-600">{{product.price}} TL</p>
-        
-        <div class="mt-12" *ngIf="product.images && product.images.length > 0">
-          <div class="aspect-[4/5] bg-neutral-900 overflow-hidden rounded-2xl relative">
-            <img [src]="getProxyUrl(product.images[currentImageIndex].url)" class="w-full h-full object-cover">
-          </div>
-          <div class="flex gap-2 mt-4 overflow-x-auto pb-4">
-            <img *ngFor="let img of product.images; let i = index" 
-                 [src]="getProxyUrl(img.url)" 
-                 (click)="scrollToImage(i)"
-                 class="w-20 h-20 flex-shrink-0 cursor-pointer rounded-lg border-2 border-transparent object-cover">
-          </div>
-        </div>
-
-        <div class="mt-12" *ngIf="product.sizes && product.sizes.length > 0">
-          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Select Size</h3>
-          <div class="grid grid-cols-4 gap-3">
-            <button *ngFor="let size of product.sizes" 
-                    (click)="selectSize(size.name)"
-                    class="h-16 border border-gray-800 rounded-2xl font-bold uppercase transition-all">
-              {{size.name}}
-            </button>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-4 mt-12 mb-8">
-          <div class="flex items-center bg-neutral-900 border border-white/5 h-16 rounded-2xl px-2">
-            <button (click)="decrementQuantity()" class="w-12 h-12 flex items-center justify-center text-white/40 hover:text-white transition-colors">-</button>
-            <span class="w-12 text-center text-white font-bold text-lg">{{quantity}}</span>
-            <button (click)="incrementQuantity()" class="w-12 h-12 flex items-center justify-center text-white/40 hover:text-white transition-colors">+</button>
-          </div>
-          <button (click)="addToCart()" 
-                  class="flex-1 bg-yellow-600 hover:bg-yellow-500 text-black h-16 flex items-center justify-center gap-3 font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-yellow-600/10">
-            Add to Archive
-          </button>
-        </div>
-
-        <a [href]="whatsappLink" target="_blank" 
-           class="w-full h-16 rounded-2xl border border-white/5 flex items-center justify-center gap-3 text-white/40 hover:text-white hover:bg-white/5 transition-all uppercase text-[10px] font-bold tracking-[0.3em]">
-          Ask on WhatsApp
-        </a>
-
-        <div class="mt-12 p-8 bg-neutral-900 rounded-3xl mb-20">
-          <p class="text-gray-400">{{product.description}}</p>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './product-detail.component.html'
 })
 export class ProductDetailComponent implements OnInit {
   @ViewChild('galleryContainer') galleryContainer!: ElementRef;
