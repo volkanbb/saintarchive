@@ -89,10 +89,6 @@ import { Observable, map } from 'rxjs';
                    <div class="w-2 h-2 rounded-full bg-[#c5a059] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                    E-posta
                 </a>
-                <a routerLink="/contact" 
-                   class="block px-5 py-4 text-[10px] text-center font-black text-white/40 uppercase tracking-[0.3em] hover:text-white hover:bg-white/5 transition-all bg-white/2">
-                   Tümünü Gör
-                </a>
               </div>
             </div>
           </div>
