@@ -69,7 +69,8 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/users/admin-users.component').then(m => m.AdminUsersComponent)
       },
       { path: 'preview/:id', loadComponent: () => import('./pages/admin/preview/preview.component').then(c => c.PreviewComponent) },
-      { path: 'featured-sort', loadComponent: () => import('./pages/admin/featured-sort/featured-sort.component').then(c => c.FeaturedSortComponent) }
+      { path: 'featured-sort', loadComponent: () => import('./pages/admin/featured-sort/featured-sort.component').then(c => c.FeaturedSortComponent) },
+      { path: 'sizes', loadComponent: () => import('./pages/admin/size-management/size-management.component').then(m => m.SizeManagementComponent) }
     ]
   },
   { path: '**', redirectTo: '' }

@@ -57,6 +57,14 @@ export class ProductService {
     return this.http.post<void>(`${this.API_URL}/bulk-update-sizes`, { productIds, sizeIds });
   }
 
+  addSize(name: string): Observable<Size> {
+    return this.http.post<Size>(`${this.API_URL}/sizes`, { name });
+  }
+
+  deleteSize(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/sizes/${id}`);
+  }
+
   bulkDelete(productIds: string[]): Observable<void> {
     return this.http.post<void>(`${this.API_URL}/bulk-delete`, productIds);
   }

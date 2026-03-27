@@ -367,6 +367,44 @@ public class ProductsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("sizes")]
+    public async Task<IActionResult> CreateSize([FromBody] SizeDto sizeDto)
+    {
+        if (string.IsNullOrWhiteSpace(sizeDto.Name)) return BadRequest("Size name is required.");
+
+        var existing = await _context.Sizes.AnyAsync(s => s.Name == sizeDto.Name);
+        if (existing) return BadRequest("Size already exists.");
+
+        var size = new Domain.Entities.Size
+        {
+            Id = Guid.NewGuid(),
+            Name = sizeDto.Name
+        };
+
+        _context.Sizes.Add(size);
+        await _context.SaveChangesAsync();
+
+        sizeDto.Id = size.Id;
+        return CreatedAtAction(nameof(GetSizes), new { }, sizeDto);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("sizes/{id}")]
+    public async Task<IActionResult> DeleteSize(Guid id)
+    {
+        var size = await _context.Sizes.FindAsync(id);
+        if (size == null) return NotFound();
+
+        // Check if any products are using this size
+        var inUse = await _context.Products.AnyAsync(p => p.Sizes.Any(s => s.Id == id));
+        if (inUse) return BadRequest("Cannot delete size that is currently assigned to products.");
+
+        _context.Sizes.Remove(size);
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 public class BulkUpdateSizesRequest
