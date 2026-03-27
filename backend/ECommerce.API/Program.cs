@@ -174,7 +174,10 @@ using (var scope = app.Services.CreateScope())
                 new SystemSetting { Key = "WhatsAppNumber", Value = "33612345678", Description = "Store contact WhatsApp number (International format without +)" },
                 new SystemSetting { Key = "InstagramUrl", Value = "https://instagram.com/saintarchive", Description = "Instagram profile URL" },
                 new SystemSetting { Key = "TikTokUrl", Value = "https://tiktok.com/@saintarchive", Description = "TikTok profile URL" },
-                new SystemSetting { Key = "ContactEmail", Value = "info@saintarchive.com.tr", Description = "Public contact email address" }
+                new SystemSetting { Key = "ContactEmail", Value = "info@saintarchive.com.tr", Description = "Public contact email address" },
+                new SystemSetting { Key = "PrivacyPolicy", Value = "Gizlilik politikası içeriği buraya gelecek.", Description = "Gizlilik Politikası metni" },
+                new SystemSetting { Key = "TermsAndConditions", Value = "Kullanım şartları içeriği buraya gelecek.", Description = "Kullanım Şartları metni" },
+                new SystemSetting { Key = "ShippingInfo", Value = "Kargo ve teslimat bilgileri buraya gelecek.", Description = "Kargo ve Teslimat Bilgileri metni" }
             };
 
             // Remove deprecated settings

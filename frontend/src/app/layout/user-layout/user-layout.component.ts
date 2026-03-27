@@ -167,9 +167,9 @@ import { Observable, map } from 'rxjs';
         </div>
         
         <nav class="flex flex-wrap justify-center gap-x-12 gap-y-4 text-xs font-bold uppercase tracking-[0.2em] text-white/40">
-          <a href="#" class="hover:text-white transition-colors">GİZLİLİK</a>
-          <a href="#" class="hover:text-white transition-colors">ŞARTLAR</a>
-          <a href="#" class="hover:text-white transition-colors">KARGO</a>
+          <a routerLink="/privacy" class="hover:text-white transition-colors">GİZLİLİK</a>
+          <a routerLink="/terms" class="hover:text-white transition-colors">ŞARTLAR</a>
+          <a routerLink="/shipping" class="hover:text-white transition-colors">KARGO</a>
           <a routerLink="/contact" class="hover:text-white transition-colors">İLETİŞİM</a>
         </nav>
 

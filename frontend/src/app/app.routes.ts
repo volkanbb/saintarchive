@@ -12,7 +12,22 @@ export const routes: Routes = [
       { path: 'category/:id', loadComponent: () => import('./pages/user/category-view/category-view.component').then(c => c.CategoryViewComponent) },
       { path: 'product/:id', loadComponent: () => import('./pages/user/product-detail/product-detail.component').then(c => c.ProductDetailComponent) },
       { path: 'cart', loadComponent: () => import('./pages/user/cart/cart.component').then(c => c.CartComponent) },
-      { path: 'contact', loadComponent: () => import('./pages/user/contact/contact.component').then(c => c.ContactComponent) }
+      { path: 'contact', loadComponent: () => import('./pages/user/contact/contact.component').then(c => c.ContactComponent) },
+      { 
+        path: 'privacy', 
+        loadComponent: () => import('./pages/user/info-page/info-page.component').then(c => c.InfoPageComponent),
+        data: { title: 'Gizlilik Politikası', settingKey: 'PrivacyPolicy' }
+      },
+      { 
+        path: 'terms', 
+        loadComponent: () => import('./pages/user/info-page/info-page.component').then(c => c.InfoPageComponent),
+        data: { title: 'Kullanım Şartları', settingKey: 'TermsAndConditions' }
+      },
+      { 
+        path: 'shipping', 
+        loadComponent: () => import('./pages/user/info-page/info-page.component').then(c => c.InfoPageComponent),
+        data: { title: 'Kargo ve Teslimat', settingKey: 'ShippingInfo' }
+      }
     ]
   },
   {

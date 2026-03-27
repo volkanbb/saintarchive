@@ -96,6 +96,51 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
 
           </div>
         </div>
+
+        <!-- Legal & Info Content -->
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-10 space-y-12">
+            <div class="space-y-2">
+              <h3 class="text-lg font-bold text-slate-900">Legal & Informational Pages</h3>
+              <p class="text-sm text-slate-500 leading-relaxed">Long-form content for your footer pages (Privacy, Terms, Shipping).</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-12">
+              <!-- Privacy Policy -->
+              <div class="space-y-4" *ngIf="getSetting('PrivacyPolicy') as s">
+                <div class="flex items-center justify-between">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gizlilik Politikası (Privacy Policy)</label>
+                  <button (click)="saveSetting(s)" class="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest">SAVE CHANGES</button>
+                </div>
+                <textarea [(ngModel)]="s.value" rows="6" 
+                          class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm resize-none"
+                          placeholder="Gizlilik politikası metnini buraya girin..."></textarea>
+              </div>
+
+              <!-- Terms -->
+              <div class="space-y-4" *ngIf="getSetting('TermsAndConditions') as s">
+                <div class="flex items-center justify-between">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kullanım Şartları (Terms & Conditions)</label>
+                  <button (click)="saveSetting(s)" class="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest">SAVE CHANGES</button>
+                </div>
+                <textarea [(ngModel)]="s.value" rows="6" 
+                          class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm resize-none"
+                          placeholder="Kullanım şartları metnini buraya girin..."></textarea>
+              </div>
+
+              <!-- Shipping -->
+              <div class="space-y-4" *ngIf="getSetting('ShippingInfo') as s">
+                <div class="flex items-center justify-between">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kargo ve Teslimat (Shipping Info)</label>
+                  <button (click)="saveSetting(s)" class="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest">SAVE CHANGES</button>
+                </div>
+                <textarea [(ngModel)]="s.value" rows="6" 
+                          class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm resize-none"
+                          placeholder="Kargo ve teslimat bilgilerini buraya girin..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Success Notification Toast -->
