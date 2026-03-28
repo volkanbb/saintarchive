@@ -1,5 +1,8 @@
 using ECommerce.Application.Interfaces;
 using Microsoft.Playwright;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ECommerce.Infrastructure.Services;
 
@@ -136,16 +139,29 @@ public class YupooScraperService : IYupooScraperService
     }
 
     public async Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default)
+    {
+        var products = new System.Collections.Concurrent.ConcurrentBag<ScrapedProductInfo>();
+        var albumUrls = await ScrapeCategoryAsync(categoryUrl, cancellationToken);
+        if (albumUrls.Count == 0) return products.ToList();
+
+        await ScrapeBulkAsync(albumUrls.Take(3000), (info) =>
+        {
+            products.Add(info);
+            return Task.CompletedTask;
+        }, maxConcurrency: 5, ct: cancellationToken);
+
+        return products.ToList();
+    }
 
     public async Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
         var page = await browser.NewPageAsync();
-        return await ScrapeProductWithPageAsync(page, yupooUrl, cancellationToken);
+        return await ScrapeProductInternalAsync(page, yupooUrl);
     }
 
-    public async Task<ScrapedProductInfo> ScrapeProductWithPageAsync(IPage page, string url, CancellationToken cancellationToken = default)
+    private async Task<ScrapedProductInfo> ScrapeProductWithPageAsync(IPage page, string url, CancellationToken cancellationToken = default)
     {
         return await ScrapeProductInternalAsync(page, url);
     }
