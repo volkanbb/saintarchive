@@ -86,7 +86,7 @@ public class ImportController : ControllerBase
                         return;
                     }
 
-                    foreach (var albumUrl in albumUrls.Take(20))
+                    foreach (var albumUrl in albumUrls.Take(500))
                     {
                         try
                         {
