@@ -30,13 +30,11 @@ public class YupooScraperService : IYupooScraperService
 
                 await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 60000 });
                 
-                // Wait for either the album list OR an empty state / closed account message
+                // Wait for the main album container
                 try {
-                    await page.WaitForSelectorAsync(".album__main, .album3__main, .showindex__children a, .categories__children a, .empty-state, .empty__emptytitle, .empty__main", 
-                        new PageWaitForSelectorOptions { Timeout = 15000 });
-                } catch {
-                    // If timeout, just proceed and check what we have
-                }
+                    await page.WaitForSelectorAsync(".album__main, .album3__main, .showindex__children, .empty-state, .empty__main", 
+                        new PageWaitForSelectorOptions { Timeout = 10000 });
+                } catch { /* proceed and see what we have */ }
 
                 // Check for "homepage closed" message
                 var emptyTitle = await page.QuerySelectorAsync(".empty__emptytitle");
@@ -48,6 +46,23 @@ public class YupooScraperService : IYupooScraperService
                         throw new KeyNotFoundException("This Yupoo account is temporarily closed or restricted.");
                     }
                 }
+
+                // SCROLL to ensure all lazy elements are rendered
+                await page.EvaluateAsync(@"async () => {
+                    await new Promise((resolve) => {
+                        let totalHeight = 0;
+                        let distance = 800;
+                        let timer = setInterval(() => {
+                            let scrollHeight = document.body.scrollHeight;
+                            window.scrollBy(0, distance);
+                            totalHeight += distance;
+                            if(totalHeight >= scrollHeight || totalHeight > 10000){
+                                clearInterval(timer);
+                                resolve();
+                            }
+                        }, 100);
+                    });
+                }");
                 
                 var albumElements = await page.QuerySelectorAllAsync(".album__main, .album3__main, .showindex__children a, .categories__children a");
                 foreach (var element in albumElements)
@@ -102,7 +117,7 @@ public class YupooScraperService : IYupooScraperService
         await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
         var page = await browser.NewPageAsync();
 
-        foreach (var url in albumUrls.Take(20)) // Limit to 20 for safety
+        foreach (var url in albumUrls.Take(500)) // Increased to 500 for large categories
         {
             if (cancellationToken.IsCancellationRequested) break;
             try
