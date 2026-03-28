@@ -15,6 +15,8 @@ public class Product : BaseEntity
     public Guid? SubCategoryId { get; set; }
     public Category? SubCategory { get; set; }
 
+    public string? OriginalUrl { get; set; }
+    
     public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
     public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public ICollection<Size> Sizes { get; set; } = new List<Size>();

@@ -22,7 +22,7 @@ public class YupooScraperService : IYupooScraperService
         {
             var currentUrl = categoryUrl;
             int pageCount = 0;
-            const int maxPages = 15; // Increased safety limit for large categories
+            const int maxPages = 50; // Increased to 50 for 2000+ products
 
             while (!string.IsNullOrEmpty(currentUrl) && pageCount < maxPages)
             {
@@ -112,38 +112,42 @@ public class YupooScraperService : IYupooScraperService
         return albumUrls;
     }
 
-    public async Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default)
+    public async Task ScrapeBulkAsync(IEnumerable<string> urls, Func<ScrapedProductInfo, Task> onProductScraped, int maxConcurrency = 5, CancellationToken ct = default)
     {
-        var products = new List<ScrapedProductInfo>();
-        var albumUrls = await ScrapeCategoryAsync(categoryUrl, cancellationToken);
-        if (albumUrls.Count == 0) return products;
-
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
-        var page = await browser.NewPageAsync();
 
-        foreach (var url in albumUrls.Take(500)) // Increased to 500 for large categories
+        await Parallel.ForEachAsync(urls, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency, CancellationToken = ct }, async (url, token) =>
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            var page = await browser.NewPageAsync();
             try
             {
-                var info = await ScrapeProductInternalAsync(page, url);
-                if (info != null && !string.IsNullOrEmpty(info.Title)) products.Add(info);
-                // Tiny delay to be nice to Yupoo
-                await Task.Delay(500, cancellationToken);
+                var info = await ScrapeProductWithPageAsync(page, url, token);
+                if (info != null && !string.IsNullOrEmpty(info.Title))
+                {
+                    await onProductScraped(info);
+                }
             }
-            catch (Exception ex) { Console.WriteLine($"Error in bulk scrape for {url}: {ex.Message}"); }
-        }
-
-        return products;
+            finally
+            {
+                await page.CloseAsync();
+            }
+        });
     }
+
+    public async Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default)
 
     public async Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
         var page = await browser.NewPageAsync();
-        return await ScrapeProductInternalAsync(page, yupooUrl);
+        return await ScrapeProductWithPageAsync(page, yupooUrl, cancellationToken);
+    }
+
+    public async Task<ScrapedProductInfo> ScrapeProductWithPageAsync(IPage page, string url, CancellationToken cancellationToken = default)
+    {
+        return await ScrapeProductInternalAsync(page, url);
     }
 
     private async Task<ScrapedProductInfo> ScrapeProductInternalAsync(IPage page, string url)
@@ -157,28 +161,27 @@ public class YupooScraperService : IYupooScraperService
             
             await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90000 });
             
-            // Scroll to the bottom to trigger lazy-loaded images - IMPROVED
+            // Scroll to the bottom to trigger lazy-loaded images - OPTIMIZED for speed
             await page.EvaluateAsync(@"async () => {
                 await new Promise((resolve) => {
                     let totalHeight = 0;
-                    let distance = 600;
+                    let distance = 800; // Increased distance
                     let timer = setInterval(() => {
                         let scrollHeight = document.body.scrollHeight;
                         window.scrollBy(0, distance);
                         totalHeight += distance;
                         
-                        // If we reached the bottom or a very large height
-                        if(totalHeight >= scrollHeight || totalHeight > 15000){
+                        if(totalHeight >= scrollHeight || totalHeight > 10000){
                             clearInterval(timer);
                             resolve();
                         }
-                    }, 200);
+                    }, 100); // Shorter interval
                 });
             }");
 
-            // Wait for images to actually load
-            await page.WaitForLoadStateAsync(LoadState.Load);
-            await Task.Delay(2000); // Give it some extra time for dynamic elements
+            // Wait for images - Reduced delay but ensuring DOM content is loaded
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+            await Task.Delay(500); // Small buffer instead of 2000ms
 
             var titleElement = await page.QuerySelectorAsync(".showalbumheader__gallerytitle, .showindex__title");
             var rawTitle = titleElement != null ? (await titleElement.InnerTextAsync()).Trim() : (await page.TitleAsync()).Replace(" - Yupoo", "").Trim();

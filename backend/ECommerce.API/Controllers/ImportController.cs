@@ -70,47 +70,62 @@ public class ImportController : ControllerBase
                 currentTask.Status = "Processing";
                 await db.SaveChangesAsync();
 
-                var previewIds = new List<Guid>();
+                var previewIds = new System.Collections.Concurrent.ConcurrentBag<Guid>();
 
                 if (url.Contains("/categories/"))
                 {
-                    var albumUrls = await scraper.ScrapeCategoryAsync(url);
-                    currentTask.TotalAlbums = albumUrls.Count;
+                    var albumUrls = (await scraper.ScrapeCategoryAsync(url)).Distinct().ToList();
+                    
+                    // Deduplication: Pre-fetch existing and temporary URLs
+                    var existingUrls = await db.Products.Select(p => p.OriginalUrl).Where(u => u != null).ToListAsync();
+                    var tempUrls = await db.TempImportedProducts.Where(tp => !tp.IsProcessed).Select(tp => tp.OriginalUrl).ToListAsync();
+                    var processedSet = new HashSet<string>(existingUrls.Concat(tempUrls), StringComparer.OrdinalIgnoreCase);
+
+                    var finalUrls = albumUrls.Where(u => !processedSet.Contains(u)).Take(3000).ToList();
+                    currentTask.TotalAlbums = finalUrls.Count;
                     await db.SaveChangesAsync();
 
-                    if (albumUrls.Count == 0)
+                    if (finalUrls.Count == 0)
                     {
-                        currentTask.Status = "Failed";
-                        currentTask.ErrorMessage = "No albums found in this category.";
+                        currentTask.Status = "Completed";
+                        currentTask.ErrorMessage = albumUrls.Count > 0 ? "All products from this category are already in the system." : "No albums found.";
                         await db.SaveChangesAsync();
                         return;
                     }
 
-                    foreach (var albumUrl in albumUrls.Take(500))
+                    await scraper.ScrapeBulkAsync(finalUrls, async (product) =>
                     {
                         try
                         {
-                            var product = await scraper.ScrapeProductAsync(albumUrl);
-                            if (product != null && !string.IsNullOrEmpty(product.Title))
+                            using var subScope = _scopeFactory.CreateScope();
+                            var subDb = subScope.ServiceProvider.GetRequiredService<IAppDbContext>();
+                            
+                            var tempProduct = new TempImportedProduct
                             {
-                                var tempProduct = new TempImportedProduct
-                                {
-                                    Id = Guid.NewGuid(),
-                                    OriginalUrl = product.Url,
-                                    Title = product.Title,
-                                    Description = product.Description,
-                                    ImagesJson = JsonSerializer.Serialize(product.ImageUrls),
-                                    IsProcessed = false
-                                };
-                                db.TempImportedProducts.Add(tempProduct);
-                                previewIds.Add(tempProduct.Id);
+                                Id = Guid.NewGuid(),
+                                OriginalUrl = product.Url,
+                                Title = product.Title,
+                                Description = product.Description,
+                                ImagesJson = JsonSerializer.Serialize(product.ImageUrls),
+                                IsProcessed = false
+                            };
+                            subDb.TempImportedProducts.Add(tempProduct);
+                            await subDb.SaveChangesAsync();
+                            
+                            previewIds.Add(tempProduct.Id);
+                            
+                            // Thread-safe progress update
+                            using var progressScope = _scopeFactory.CreateScope();
+                            var progressDb = progressScope.ServiceProvider.GetRequiredService<IAppDbContext>();
+                            var taskRow = await progressDb.YupooScrapeTasks.FindAsync(task.Id);
+                            if (taskRow != null)
+                            {
+                                taskRow.ProcessedAlbums++;
+                                await progressDb.SaveChangesAsync();
                             }
                         }
-                        catch (Exception ex) { Console.WriteLine($"Error in background scrape for {albumUrl}: {ex.Message}"); }
-                        
-                        currentTask.ProcessedAlbums++;
-                        await db.SaveChangesAsync();
-                    }
+                        catch (Exception ex) { Console.WriteLine($"Error saving background scraper result for {product.Url}: {ex.Message}"); }
+                    }, maxConcurrency: 5);
                 }
                 else
                 {
@@ -136,7 +151,7 @@ public class ImportController : ControllerBase
                 }
 
                 currentTask.Status = "Completed";
-                currentTask.SetTempProductIds(previewIds);
+                currentTask.SetTempProductIds(previewIds.ToList());
                 await db.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -207,7 +222,8 @@ public class ImportController : ControllerBase
             Price = request.Price,
             IsFeatured = request.IsFeatured,
             CategoryId = category.Id,
-            SubCategoryId = request.SubCategoryId
+            SubCategoryId = request.SubCategoryId,
+            OriginalUrl = tempProduct.OriginalUrl
         };
 
         _context.Products.Add(product);

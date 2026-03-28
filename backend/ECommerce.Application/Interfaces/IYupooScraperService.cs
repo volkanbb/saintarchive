@@ -11,6 +11,8 @@ public class ScrapedProductInfo
 public interface IYupooScraperService
 {
     Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default);
+    Task<ScrapedProductInfo> ScrapeProductWithPageAsync(IPage page, string url, CancellationToken cancellationToken = default);
     Task<List<string>> ScrapeCategoryAsync(string categoryUrl, CancellationToken cancellationToken = default);
+    Task ScrapeBulkAsync(IEnumerable<string> urls, Func<ScrapedProductInfo, Task> onProductScraped, int maxConcurrency = 5, CancellationToken ct = default);
     Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default);
 }
