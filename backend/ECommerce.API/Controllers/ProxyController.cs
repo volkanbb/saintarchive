@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ECommerce.API.Controllers;
 
@@ -9,11 +10,19 @@ public class ProxyController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ProxyController> _logger;
+    private readonly string _cachePath;
 
-    public ProxyController(IHttpClientFactory httpClientFactory, ILogger<ProxyController> logger)
+    public ProxyController(IHttpClientFactory httpClientFactory, ILogger<ProxyController> logger, IWebHostEnvironment env)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        
+        // Define cache path in the content root
+        _cachePath = Path.Combine(env.ContentRootPath, "image_cache");
+        if (!Directory.Exists(_cachePath))
+        {
+            Directory.CreateDirectory(_cachePath);
+        }
     }
 
     [HttpGet("image")]
@@ -21,19 +30,30 @@ public class ProxyController : ControllerBase
     {
         if (string.IsNullOrEmpty(url)) return BadRequest("URL is required");
 
-        _logger.LogInformation("Proxying image request for URL: {Url}", url);
+        // 1. Check Cache
+        string cacheKey = GetCacheKey(url);
+        string filePath = Path.Combine(_cachePath, cacheKey);
+
+        if (System.IO.File.Exists(filePath))
+        {
+            // Serve from cache
+            var cachedData = await System.IO.File.ReadAllBytesAsync(filePath);
+            string cachedContentType = GetContentType(filePath);
+            
+            // Add caching headers for 7 days
+            Response.Headers.Append("Cache-Control", "public, max-age=604800");
+            return File(cachedData, cachedContentType);
+        }
+
+        _logger.LogInformation("Cache miss. Proxying image request for URL: {Url}", url);
 
         try
         {
             var client = _httpClientFactory.CreateClient();
-            
-            // Extract host and username to be more specific with headers
             var uri = new Uri(url);
             var host = uri.Host;
-            // Yupoo photo URLs are usually https://photo.yupoo.com/USERNAME/ALBUM_ID/IMAGE_ID.jpg
             var username = uri.Segments.Length > 1 ? uri.Segments[1].Trim('/') : null;
 
-            // Set headers to mimic a modern browser
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
             client.DefaultRequestHeaders.Accept.ParseAdd("image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
             client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "image");
@@ -41,7 +61,6 @@ public class ProxyController : ControllerBase
             client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "cross-site");
             client.DefaultRequestHeaders.Connection.Add("keep-alive");
             
-            // Construct a specific Referer if username is found, otherwise fallback to generic
             string referer = !string.IsNullOrEmpty(username) && !username.Equals("static", StringComparison.OrdinalIgnoreCase)
                 ? $"https://{username}.x.yupoo.com/"
                 : $"https://{host.Replace("photo.", "")}/";
@@ -51,32 +70,36 @@ public class ProxyController : ControllerBase
             var response = await client.GetAsync(url);
             if (!response.IsSuccessStatusCode) 
             {
-                // Second attempt with generic root yupoo.com
-                _logger.LogInformation("Retrying proxy for {Url} with generic yupoo referer", url);
                 client.DefaultRequestHeaders.Referrer = new Uri("https://yupoo.com/");
                 response = await client.GetAsync(url);
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                // Third attempt with photo.yupoo.com as referer
-                _logger.LogInformation("Retrying proxy for {Url} with photo.yupoo.com referer", url);
                 client.DefaultRequestHeaders.Referrer = new Uri("https://photo.yupoo.com/");
                 response = await client.GetAsync(url);
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Yupoo returned status {StatusCode} for URL {Url} with Referer {Referer}", response.StatusCode, url, referer);
+                _logger.LogWarning("Yupoo returned status {StatusCode} for URL {Url}", response.StatusCode, url);
                 return StatusCode((int)response.StatusCode);
             }
 
             var content = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "image/jpeg";
 
-            // Add caching headers for 7 days
-            Response.Headers.Append("Cache-Control", "public, max-age=604800");
+            // 2. Save to Cache
+            try
+            {
+                await System.IO.File.WriteAllBytesAsync(filePath, content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to write image to cache: {FilePath}", filePath);
+            }
 
+            Response.Headers.Append("Cache-Control", "public, max-age=604800");
             return File(content, contentType);
         }
         catch (Exception ex)
@@ -84,5 +107,29 @@ public class ProxyController : ControllerBase
             _logger.LogError(ex, "Error proxying image for {Url}", url);
             return StatusCode(500, ex.Message);
         }
+    }
+
+    private string GetCacheKey(string url)
+    {
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(url));
+        return Convert.ToHexString(hash).ToLower() + GetExtension(url);
+    }
+
+    private string GetExtension(string url)
+    {
+        var cleanUrl = url.Split('?')[0].ToLower();
+        if (cleanUrl.EndsWith(".png")) return ".png";
+        if (cleanUrl.EndsWith(".webp")) return ".webp";
+        if (cleanUrl.EndsWith(".gif")) return ".gif";
+        return ".jpg";
+    }
+
+    private string GetContentType(string filePath)
+    {
+        if (filePath.EndsWith(".png")) return "image/png";
+        if (filePath.EndsWith(".webp")) return "image/webp";
+        if (filePath.EndsWith(".gif")) return "image/gif";
+        return "image/jpeg";
     }
 }

@@ -1,12 +1,14 @@
 using ECommerce.Application.Interfaces;
 using Microsoft.Playwright;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ECommerce.Infrastructure.Services;
 
-public class YupooScraperService : IYupooScraperService
+public class YupooScraperService : IYupooScraperService, IDisposable
 {
     private readonly BrowserTypeLaunchOptions _launchOptions = new()
     {
@@ -14,18 +16,45 @@ public class YupooScraperService : IYupooScraperService
         Args = new[] { "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-software-rasterizer" }
     };
 
+    private static IPlaywright? _playwright;
+    private static IBrowser? _browser;
+    private static readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
+    private bool _disposed = false;
+
+    private async Task<IBrowser> GetBrowserAsync()
+    {
+        if (_browser != null && _browser.IsConnected)
+            return _browser;
+
+        await _initializationSemaphore.WaitAsync();
+        try
+        {
+            if (_browser != null && _browser.IsConnected)
+                return _browser;
+
+            if (_playwright == null)
+                _playwright = await Playwright.CreateAsync();
+
+            _browser = await _playwright.Chromium.LaunchAsync(_launchOptions);
+            return _browser;
+        }
+        finally
+        {
+            _initializationSemaphore.Release();
+        }
+    }
+
     public async Task<List<string>> ScrapeCategoryAsync(string categoryUrl, CancellationToken cancellationToken = default)
     {
         var albumUrls = new List<string>();
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
+        var browser = await GetBrowserAsync();
         var page = await browser.NewPageAsync();
 
         try
         {
             var currentUrl = categoryUrl;
             int pageCount = 0;
-            const int maxPages = 50; // Increased to 50 for 2000+ products
+            const int maxPages = 50; 
 
             while (!string.IsNullOrEmpty(currentUrl) && pageCount < maxPages)
             {
@@ -59,12 +88,12 @@ public class YupooScraperService : IYupooScraperService
                 await page.EvaluateAsync(@"async () => {
                     await new Promise((resolve) => {
                         let totalHeight = 0;
-                        let distance = 800;
+                        let distance = 1000;
                         let timer = setInterval(() => {
                             let scrollHeight = document.body.scrollHeight;
                             window.scrollBy(0, distance);
                             totalHeight += distance;
-                            if(totalHeight >= scrollHeight || totalHeight > 10000){
+                            if(totalHeight >= scrollHeight || totalHeight > 15000){
                                 clearInterval(timer);
                                 resolve();
                             }
@@ -112,58 +141,71 @@ public class YupooScraperService : IYupooScraperService
             Console.WriteLine($"Error scraping Yupoo category: {ex.Message}"); 
             throw new Exception($"Scraping failed: {ex.Message}");
         }
+        finally
+        {
+            await page.CloseAsync();
+        }
         return albumUrls;
     }
 
-    public async Task ScrapeBulkAsync(IEnumerable<string> urls, Func<ScrapedProductInfo, Task> onProductScraped, int maxConcurrency = 5, CancellationToken ct = default)
+    public async Task ScrapeBulkAsync(IEnumerable<string> urls, Func<ScrapedProductInfo, Task> onProductScraped, int maxConcurrency = 3, CancellationToken ct = default)
     {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
-
+        var browser = await GetBrowserAsync();
+        
+        // Use a smaller degree of parallelism to keep the server responsive
         await Parallel.ForEachAsync(urls, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency, CancellationToken = ct }, async (url, token) =>
         {
-            var page = await browser.NewPageAsync();
+            // Context per task to isolate cookies/cache if needed
+            var context = await browser.NewContextAsync();
+            var page = await context.NewPageAsync();
             try
             {
-                var info = await ScrapeProductWithPageAsync(page, url, token);
+                var info = await ScrapeProductInternalAsync(page, url);
                 if (info != null && !string.IsNullOrEmpty(info.Title))
                 {
                     await onProductScraped(info);
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Scraper] Bulk operation failed for {url}: {ex.Message}");
+            }
             finally
             {
                 await page.CloseAsync();
+                await context.CloseAsync();
             }
         });
     }
 
     public async Task<List<ScrapedProductInfo>> ScrapeCategoryWithProductsAsync(string categoryUrl, CancellationToken cancellationToken = default)
     {
-        var products = new System.Collections.Concurrent.ConcurrentBag<ScrapedProductInfo>();
+        var products = new ConcurrentBag<ScrapedProductInfo>();
         var albumUrls = await ScrapeCategoryAsync(categoryUrl, cancellationToken);
         if (albumUrls.Count == 0) return products.ToList();
 
+        // Optimized concurrency for full category pull
         await ScrapeBulkAsync(albumUrls.Take(3000), (info) =>
         {
             products.Add(info);
             return Task.CompletedTask;
-        }, maxConcurrency: 5, ct: cancellationToken);
+        }, maxConcurrency: 3, ct: cancellationToken);
 
         return products.ToList();
     }
 
     public async Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default)
     {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(_launchOptions);
+        var browser = await GetBrowserAsync();
         var page = await browser.NewPageAsync();
-        return await ScrapeProductInternalAsync(page, yupooUrl);
-    }
-
-    private async Task<ScrapedProductInfo> ScrapeProductWithPageAsync(IPage page, string url, CancellationToken cancellationToken = default)
-    {
-        return await ScrapeProductInternalAsync(page, url);
+        try
+        {
+            return await ScrapeProductInternalAsync(page, yupooUrl);
+        }
+        finally
+        {
+            await page.CloseAsync();
+        }
     }
 
     private async Task<ScrapedProductInfo> ScrapeProductInternalAsync(IPage page, string url)
@@ -177,33 +219,30 @@ public class YupooScraperService : IYupooScraperService
             
             await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90000 });
             
-            // Scroll to the bottom to trigger lazy-loaded images - OPTIMIZED for speed
+            // Scroll to the bottom to trigger lazy-loaded images
             await page.EvaluateAsync(@"async () => {
                 await new Promise((resolve) => {
                     let totalHeight = 0;
-                    let distance = 800; // Increased distance
+                    let distance = 1000;
                     let timer = setInterval(() => {
                         let scrollHeight = document.body.scrollHeight;
                         window.scrollBy(0, distance);
                         totalHeight += distance;
-                        
-                        if(totalHeight >= scrollHeight || totalHeight > 10000){
+                        if(totalHeight >= scrollHeight || totalHeight > 15000){
                             clearInterval(timer);
                             resolve();
                         }
-                    }, 100); // Shorter interval
+                    }, 100);
                 });
             }");
 
-            // Wait for images - Reduced delay but ensuring DOM content is loaded
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
-            await Task.Delay(500); // Small buffer instead of 2000ms
+            await Task.Delay(300); // Minimal buffer
 
             var titleElement = await page.QuerySelectorAsync(".showalbumheader__gallerytitle, .showindex__title");
             var rawTitle = titleElement != null ? (await titleElement.InnerTextAsync()).Trim() : (await page.TitleAsync()).Replace(" - Yupoo", "").Trim();
             result.Title = CleanTitle(rawTitle);
 
-            // Broadened approach: Get ALL images and filter for Yupoo sources
             var allImages = await page.QuerySelectorAllAsync("img");
             var host = new Uri(url).Host;
             var seenBaseIds = new HashSet<string>();
@@ -216,48 +255,38 @@ public class YupooScraperService : IYupooScraperService
                 
                 if (!string.IsNullOrEmpty(src))
                 {
-                    // protocol handling
                     if (src.StartsWith("//")) src = "https:" + src;
                     else if (src.StartsWith("/")) src = $"https://{host}{src}";
                     else if (!src.Contains("://")) src = $"https://{host}/{src}";
 
-                    // Yupoo Resolution Optimization: Try to get the highest resolution
-                    // Yupoo patterns: _small.jpg -> _big.jpg, or removing suffixes
                     if (src.Contains("yupoo.com"))
                     {
-                        // Replace common thumbnail suffixes with big version
                         src = src.Replace("_small.", "_big.")
                                  .Replace("_medium.", "_big.")
                                  .Replace("_square.", "_big.");
                     }
 
-                    // Extension check
                     var lowerSrc = src.ToLower();
                     bool hasValidExtension = lowerSrc.EndsWith(".jpg") || lowerSrc.EndsWith(".jpeg") || 
                                            lowerSrc.EndsWith(".png") || lowerSrc.EndsWith(".webp");
                     
                     if (!hasValidExtension) continue;
 
-                    // Keyword check for non-product assets (Size charts, logos, etc.)
                     string[] strictJunk = { 
                         "logo", "icon", "avatar", "static", "user", "banner", "btn", "button", "contact", 
                         "whatsapp", "wechat", "notice", "rules", "shipping", "return", "homepage"
                     };
                     bool isStrictJunk = strictJunk.Any(k => lowerSrc.Contains(k));
                     
-                    // Filter size charts (English and Chinese: 尺寸, 尺码, 厘米, 表)
                     bool isMetaJunk = System.Text.RegularExpressions.Regex.IsMatch(lowerSrc, 
                         @"[_-](size|chart|table|tablo|beden|olcu|measure|dimen|guide|spec|chizhi|chicun|guige|[\u4e00-\u9fa5])[._-]", 
                         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     
                     if (isStrictJunk || isMetaJunk) continue;
 
-                    // Specifically for Yupoo, we want photo.yupoo.com or the album images
                     bool isYupooImage = src.Contains("yupoo.com") || src.Contains("/album/");
                     if (!isYupooImage) continue;
 
-                    // De-duplication using Base ID (ignores subdomain and size suffixes)
-                    // We use the parent folder ID segment as the unique identifier
                     var baseId = GetImageBaseId(src);
                     if (seenBaseIds.Contains(baseId)) continue;
                     seenBaseIds.Add(baseId);
@@ -276,14 +305,10 @@ public class YupooScraperService : IYupooScraperService
     {
         try
         {
-            // Remove query parameters first
             var cleanUrl = url.Split('?')[0];
             var parts = cleanUrl.Split('/');
-            
-            // Yupoo patterns: photo.yupoo.com/user/ID_SEGMENT/FILENAME.jpg
             if (parts.Length >= 2)
             {
-                // The segment immediately before the filename is the stable asset ID
                 return parts[parts.Length - 2];
             }
             return cleanUrl.ToLower();
@@ -294,21 +319,23 @@ public class YupooScraperService : IYupooScraperService
     private string CleanTitle(string title)
     {
         if (string.IsNullOrEmpty(title)) return title;
-
-        // 1. Remove price patterns (195¥, ￥195, 200rmb, etc.)
-        // Handles both standard and full-width currency symbols
         string cleaned = System.Text.RegularExpressions.Regex.Replace(title, 
             @"(\d+\s*[¥￥\u00A5\uffe5]|(?:[¥￥\u00A5\uffe5])\s*\d+|\d+\s*(?:yuan|rmb))", 
             "", 
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-        // 2. Remove Chinese characters (CJK range)
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"[\u4e00-\u9fa5]+", "");
-
-        // 3. Final cleanup of spaces and punctuation
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ").Trim();
         cleaned = cleaned.Trim('-', '|', ' ', '：', ':', '[', ']', '(', ')', '{', '}');
-
         return string.IsNullOrEmpty(cleaned) ? title : cleaned;
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _browser?.CloseAsync().Wait();
+            _playwright?.Dispose();
+            _disposed = true;
+        }
     }
 }
