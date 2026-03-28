@@ -96,13 +96,8 @@
             </button>
           </div>
 
-          <a [href]="whatsappLink" target="_blank" 
-             class="w-full h-16 rounded-2xl border border-white/5 flex items-center justify-center gap-3 text-white/40 hover:text-white hover:bg-white/5 transition-all uppercase text-[10px] font-bold tracking-[0.3em] mb-12">
-            Ask on WhatsApp
-          </a>
-
           <div class="mt-12 p-8 rounded-3xl bg-[#1a1a1a]/50 border border-white/5">
-            <h3 class="text-white font-bold text-sm uppercase tracking-widest mb-4">ARCHIVE NOTES</h3>
+            <h3 class="text-white font-bold text-sm uppercase tracking-widest mb-4">ÜRÜN AÇIKLAMASI</h3>
             <div class="prose prose-invert prose-sm max-w-none">
               <p class="text-white/60 leading-relaxed">{{product.description}}</p>
             </div>
@@ -111,4 +106,13 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Floating Basket Notification -->
+<div *ngIf="showCartSuccess" 
+     class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] animate-slide-up">
+    <div class="bg-[#c5a059] text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#c5a059]/20 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        Ürün Sepete Eklendi
+    </div>
 </div>

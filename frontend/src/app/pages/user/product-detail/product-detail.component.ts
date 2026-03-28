@@ -22,6 +22,7 @@ export class ProductDetailComponent implements OnInit {
   quantity: number = 1;
   selectedSize: string | null = null;
   showSizeError: boolean = false;
+  showCartSuccess: boolean = false;
   whatsappNumber: string = '33612345678'; // Default fallback
 
   constructor(
@@ -112,6 +113,10 @@ export class ProductDetailComponent implements OnInit {
         return;
       }
       this.cartService.addToCart(this.product, this.quantity, this.selectedSize || undefined);
+      
+      // Show success notification
+      this.showCartSuccess = true;
+      setTimeout(() => this.showCartSuccess = false, 3000);
     }
   }
 
