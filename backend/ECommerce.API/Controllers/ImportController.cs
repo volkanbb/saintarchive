@@ -80,10 +80,10 @@ public class ImportController : ControllerBase
                 {
                     var albumUrls = (await scraper.ScrapeCategoryAsync(url)).Distinct().ToList();
                     
-                    // Deduplication: Pre-fetch existing and temporary URLs
+                    // Deduplication: Only exclude products already published to the main catalog.
+                    // We allow re-scraping of products in TempImportedProducts if they haven't been confirmed yet.
                     var existingUrls = await db.Products.Select(p => p.OriginalUrl).Where(u => u != null).ToListAsync();
-                    var tempUrls = await db.TempImportedProducts.Where(tp => !tp.IsProcessed).Select(tp => tp.OriginalUrl).ToListAsync();
-                    var processedSet = new HashSet<string>(existingUrls.Concat(tempUrls), StringComparer.OrdinalIgnoreCase);
+                    var processedSet = new HashSet<string>(existingUrls, StringComparer.OrdinalIgnoreCase);
 
                     var finalUrls = albumUrls.Where(u => !processedSet.Contains(u)).Take(3000).ToList();
                     currentTask.TotalAlbums = finalUrls.Count;
