@@ -28,7 +28,12 @@ public class YupooScraperService : IYupooScraperService
             {
                 if (cancellationToken.IsCancellationRequested) break;
 
-                await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 60000 });
+                // Block slow analytics/trackers to prevent timeouts
+                await page.RouteAsync("**/*baidu.com*", route => route.AbortAsync());
+                await page.RouteAsync("**/*googletagmanager.com*", route => route.AbortAsync());
+                await page.RouteAsync("**/*doubleclick.net*", route => route.AbortAsync());
+
+                await page.GotoAsync(currentUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120000 });
                 
                 // Wait for the main album container
                 try {
@@ -146,7 +151,11 @@ public class YupooScraperService : IYupooScraperService
         var result = new ScrapedProductInfo { Url = url };
         try
         {
-            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = 60000 });
+            // Block slow analytics/trackers
+            await page.RouteAsync("**/*baidu.com*", route => route.AbortAsync());
+            await page.RouteAsync("**/*googletagmanager.com*", route => route.AbortAsync());
+            
+            await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90000 });
             
             // Scroll to the bottom to trigger lazy-loaded images - IMPROVED
             await page.EvaluateAsync(@"async () => {
