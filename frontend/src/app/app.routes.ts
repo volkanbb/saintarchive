@@ -24,9 +24,9 @@ export const routes: Routes = [
         data: { title: 'Kullanım Şartları', settingKey: 'TermsAndConditions' }
       },
       { 
-        path: 'shipping', 
+        path: 'special-order', 
         loadComponent: () => import('./pages/user/info-page/info-page.component').then(c => c.InfoPageComponent),
-        data: { title: 'Kargo ve Teslimat', settingKey: 'ShippingInfo' }
+        data: { title: 'Özel Sipariş', settingKey: 'ShippingInfo' }
       }
     ]
   },

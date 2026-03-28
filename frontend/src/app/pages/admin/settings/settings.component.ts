@@ -131,12 +131,12 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
               <!-- Shipping -->
               <div class="space-y-4" *ngIf="getSetting('ShippingInfo') as s">
                 <div class="flex items-center justify-between">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kargo ve Teslimat (Shipping Info)</label>
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Özel Sipariş (Special Order Info)</label>
                   <button (click)="saveSetting(s)" class="text-[10px] font-black text-brand-600 hover:text-brand-700 uppercase tracking-widest">SAVE CHANGES</button>
                 </div>
                 <textarea [(ngModel)]="s.value" rows="6" 
                           class="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 focus:border-brand-500 outline-none transition-all text-sm resize-none"
-                          placeholder="Kargo ve teslimat bilgilerini buraya girin..."></textarea>
+                          placeholder="Özel sipariş ve teslimat bilgilerini buraya girin..."></textarea>
               </div>
             </div>
           </div>
