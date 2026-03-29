@@ -252,20 +252,21 @@ public class ImportController : ControllerBase
     [HttpGet("pending")]
     public async Task<IActionResult> GetPendingImports()
     {
-        var pending = await _context.TempImportedProducts
+        var rawPending = await _context.TempImportedProducts
             .Where(p => !p.IsProcessed)
             .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new ImportPreviewDto
-            {
-                TempImportId = p.Id,
-                OriginalUrl = p.OriginalUrl,
-                Title = p.Title,
-                Description = p.Description,
-                Images = !string.IsNullOrEmpty(p.ImagesJson) 
-                    ? JsonSerializer.Deserialize<List<string>>(p.ImagesJson) ?? new List<string>() 
-                    : new List<string>()
-            })
             .ToListAsync();
+
+        var pending = rawPending.Select(p => new ImportPreviewDto
+        {
+            TempImportId = p.Id,
+            OriginalUrl = p.OriginalUrl,
+            Title = p.Title,
+            Description = p.Description,
+            Images = !string.IsNullOrEmpty(p.ImagesJson) 
+                ? JsonSerializer.Deserialize<List<string>>(p.ImagesJson) ?? new List<string>() 
+                : new List<string>()
+        }).ToList();
 
         return Ok(pending);
     }
