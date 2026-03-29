@@ -39,7 +39,7 @@ import { BulkEditCategoryDetailsModalComponent } from './bulk-edit-category-deta
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
               <input type="text" [(ngModel)]="newCategory.imageUrl" name="imageUrl" 
-                     class="block w-full rounded-xl border-slate-300 border bg-slate-50 px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors" placeholder="https://photo.yupoo.com/...">
+                     class="block w-full rounded-xl border-slate-300 border bg-slate-50 px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors" placeholder="Yupoo or direct image URL...">
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Sub-categories (Comma separated)</label>

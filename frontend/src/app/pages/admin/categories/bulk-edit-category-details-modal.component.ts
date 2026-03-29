@@ -52,7 +52,7 @@ import { ProductService } from '../../../core/services/product.service';
                     <label class="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-2 block">Image URL</label>
                     <input [(ngModel)]="item.imageUrl" 
                            class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
-                           placeholder="https://photo.yupoo.com/...">
+                           placeholder="Yupoo or direct image URL...">
                   </div>
 
                   <!-- Description -->
