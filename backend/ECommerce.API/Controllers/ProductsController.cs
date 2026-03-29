@@ -377,6 +377,7 @@ public class ProductsController : ControllerBase
                 product.Title = item.Title;
                 product.Price = item.Price;
                 product.Description = item.Description;
+                product.IsFeatured = item.IsFeatured;
             }
         }
 
@@ -480,4 +481,5 @@ public class ProductDetailUpdateItem
     public string Title { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string Description { get; set; } = string.Empty;
+    public bool IsFeatured { get; set; }
 }

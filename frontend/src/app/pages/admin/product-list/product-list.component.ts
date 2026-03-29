@@ -100,6 +100,7 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
                            class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
                 </th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Product</th>
+                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Featured</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Sizes</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Price</th>
                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
@@ -124,6 +125,16 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
                       <div class="text-xs text-slate-500 font-mono mt-0.5">{{product.categoryName}}</div>
                     </div>
                   </div>
+                </td>
+                <td class="px-6 py-4">
+                  <button (click)="toggleIsFeatured(product)" 
+                          [class.bg-amber-100]="product.isFeatured"
+                          [class.text-amber-700]="product.isFeatured"
+                          [class.bg-slate-100]="!product.isFeatured"
+                          [class.text-slate-400]="!product.isFeatured"
+                          class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                    {{ product.isFeatured ? 'Featured' : 'Standard' }}
+                  </button>
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex flex-wrap gap-1 max-w-[200px]">

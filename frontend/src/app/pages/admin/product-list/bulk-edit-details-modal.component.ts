@@ -53,13 +53,24 @@ import { ProductService } from '../../../core/services/product.service';
                            placeholder="0.00">
                   </div>
                   
-                  <!-- Description -->
-                  <div class="md:col-span-12">
-                    <label class="text-[10px] font-black text-[#c5a059] uppercase tracking-[0.2em] mb-2 block">Description</label>
-                    <textarea [(ngModel)]="item.description" rows="2"
-                              class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white/70 focus:ring-2 focus:ring-[#c5a059] focus:border-transparent transition-all resize-none"
-                              placeholder="Product Description"></textarea>
-                  </div>
+                      <!-- Description -->
+                      <div class="md:col-span-9">
+                        <label class="text-[10px] font-black text-[#c5a059] uppercase tracking-[0.2em] mb-2 block">Description</label>
+                        <textarea [(ngModel)]="item.description" rows="2"
+                                  class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white/70 focus:ring-2 focus:ring-[#c5a059] focus:border-transparent transition-all resize-none"
+                                  placeholder="Product Description"></textarea>
+                      </div>
+
+                      <!-- Featured Toggle -->
+                      <div class="md:col-span-3 flex items-end pb-3">
+                        <label class="flex items-center gap-3 cursor-pointer group/toggle">
+                          <input type="checkbox" [(ngModel)]="item.isFeatured" class="hidden peer">
+                          <div class="w-12 h-6 bg-white/5 rounded-full relative transition-colors peer-checked:bg-[#c5a059]">
+                            <div class="absolute top-1 left-1 w-4 h-4 bg-white/20 rounded-full transition-all peer-checked:left-7 peer-checked:bg-black"></div>
+                          </div>
+                          <span class="text-[10px] font-bold text-white/40 uppercase tracking-widest peer-checked:text-[#c5a059]">Featured</span>
+                        </label>
+                      </div>
                 </div>
               </div>
             </div>
@@ -106,7 +117,8 @@ export class BulkEditDetailsModalComponent implements OnInit {
       id: p.id,
       title: p.title,
       price: p.price,
-      description: p.description
+      description: p.description,
+      isFeatured: p.isFeatured
     }));
   }
 
