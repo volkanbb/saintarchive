@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,6 +14,24 @@ import { interval, switchMap, takeWhile, tap } from 'rxjs';
       <div class="mb-8 text-center sm:text-left">
         <h2 class="text-3xl font-display font-bold text-slate-900">Yupoo Automation Engine</h2>
         <p class="text-slate-500 mt-2 text-lg">Paste an authenticated Yupoo product link to automatically extract high-resolution media and metadata.</p>
+      </div>
+
+      <!-- Resume Pending Section -->
+      <div *ngIf="pendingCount > 0 && !loading" 
+           class="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-3xl flex items-center justify-between shadow-sm animate-slide-up">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <div>
+            <h4 class="font-bold text-amber-900 uppercase tracking-wider text-xs">Unpublished Extractions</h4>
+            <p class="text-amber-700 text-sm">You have {{ pendingCount }} items waiting to be published.</p>
+          </div>
+        </div>
+        <button (click)="resumePending()" 
+                class="px-6 py-3 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/30">
+          Resume Process
+        </button>
       </div>
       
       <div class="bg-white shadow-xl shadow-slate-200/50 rounded-3xl p-8 border border-slate-100 relative overflow-hidden">
@@ -81,15 +99,37 @@ import { interval, switchMap, takeWhile, tap } from 'rxjs';
     </div>
   `
 })
-export class ImportComponent {
+export class ImportComponent implements OnInit {
   url = '';
   loading = false;
   error = '';
   progressMessage = '';
   progressCount = 0;
   totalCount = 0;
+  
+  pendingCount = 0;
+  pendingIds: string[] = [];
 
   constructor(private importService: ImportService, private router: Router) {}
+
+  ngOnInit(): void {
+    this.checkPending();
+  }
+
+  checkPending() {
+    this.importService.getPendingImports().subscribe(res => {
+      this.pendingCount = res.length;
+      this.pendingIds = res.map(p => p.tempImportId);
+    });
+  }
+
+  resumePending() {
+    if (this.pendingIds.length > 0) {
+      this.router.navigate(['/admin/preview', this.pendingIds[0]], { 
+        queryParams: { queue: this.pendingIds.slice(1).join(',') } 
+      });
+    }
+  }
 
   startImport() {
     if (!this.url) return;

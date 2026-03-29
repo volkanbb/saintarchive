@@ -30,6 +30,10 @@ export class ImportService {
     return this.http.post<{ productId: string }>(`${this.API_URL}/confirm`, data);
   }
 
+  getPendingImports(): Observable<ImportPreview[]> {
+    return this.http.get<ImportPreview[]>(`${this.API_URL}/pending`);
+  }
+
   getProxyUrl(url: string | undefined): string {
     if (!url) return '';
     if (url.includes('yupoo.com')) {
