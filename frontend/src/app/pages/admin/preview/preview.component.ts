@@ -23,8 +23,8 @@ import { concatMap, delay, from, of, catchError, finalize } from 'rxjs';
         </div>
         <div class="flex items-center gap-3">
           <button (click)="cancel()" class="px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors">Discard</button>
-          <button [disabled]="!selectedCategory || isBulkProcessing" (click)="confirm()" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
-            Publish This Item
+          <button *ngIf="queueIds.length === 0" [disabled]="!selectedCategory || isBulkProcessing" (click)="confirm()" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
+            Publish Product
           </button>
         </div>
       </div>
@@ -225,12 +225,14 @@ export class PreviewComponent implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
-      const queue = this.route.snapshot.queryParamMap.get('queue');
-      this.queueIds = queue ? queue.split(',').filter(x => !!x) : [];
-      
       if (id) {
         this.loadPreview(id);
       }
+    });
+
+    this.route.queryParamMap.subscribe(queryParams => {
+      const queue = queryParams.get('queue');
+      this.queueIds = queue ? queue.split(',').filter(x => !!x) : [];
     });
     
     this.categoryService.getCategories().subscribe(res => {
