@@ -270,4 +270,17 @@ public class ImportController : ControllerBase
 
         return Ok(pending);
     }
+
+    [HttpDelete("pending")]
+    public async Task<IActionResult> ClearPendingImports()
+    {
+        var pending = await _context.TempImportedProducts
+            .Where(p => !p.IsProcessed)
+            .ToListAsync();
+
+        _context.TempImportedProducts.RemoveRange(pending);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Pending imports cleared successfully." });
+    }
 }

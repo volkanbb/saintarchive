@@ -16,7 +16,6 @@ import { interval, switchMap, takeWhile, tap } from 'rxjs';
         <p class="text-slate-500 mt-2 text-lg">Paste an authenticated Yupoo product link to automatically extract high-resolution media and metadata.</p>
       </div>
 
-      <!-- Resume Pending Section -->
       <div *ngIf="pendingCount > 0 && !loading" 
            class="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-3xl flex items-center justify-between shadow-sm animate-slide-up">
         <div class="flex items-center gap-4">
@@ -28,10 +27,16 @@ import { interval, switchMap, takeWhile, tap } from 'rxjs';
             <p class="text-amber-700 text-sm">You have {{ pendingCount }} items waiting to be published.</p>
           </div>
         </div>
-        <button (click)="resumePending()" 
-                class="px-6 py-3 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/30">
-          Resume Process
-        </button>
+        <div class="flex items-center gap-3">
+          <button (click)="clearQueue()" 
+                  class="px-5 py-3 bg-white border border-red-200 text-red-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all">
+            Clear List
+          </button>
+          <button (click)="resumePending()" 
+                  class="px-6 py-3 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/30">
+            Resume Process
+          </button>
+        </div>
       </div>
       
       <div class="bg-white shadow-xl shadow-slate-200/50 rounded-3xl p-8 border border-slate-100 relative overflow-hidden">
@@ -127,6 +132,14 @@ export class ImportComponent implements OnInit {
     if (this.pendingIds.length > 0) {
       this.router.navigate(['/admin/preview', this.pendingIds[0]], { 
         queryParams: { queue: this.pendingIds.slice(1).join(',') } 
+      });
+    }
+  }
+
+  clearQueue() {
+    if (confirm(`Are you sure you want to clear all ${this.pendingCount} pending items? This cannot be undone.`)) {
+      this.importService.clearPendingImports().subscribe(() => {
+        this.checkPending();
       });
     }
   }

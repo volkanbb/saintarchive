@@ -34,6 +34,10 @@ export class ImportService {
     return this.http.get<ImportPreview[]>(`${this.API_URL}/pending`);
   }
 
+  clearPendingImports(): Observable<any> {
+    return this.http.delete<any>(`${this.API_URL}/pending`);
+  }
+
   getProxyUrl(url: string | undefined): string {
     if (!url) return '';
     if (url.includes('yupoo.com')) {
