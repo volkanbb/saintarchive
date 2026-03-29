@@ -23,8 +23,16 @@ import { concatMap, delay, from, of, catchError, finalize } from 'rxjs';
         </div>
         <div class="flex items-center gap-3">
           <button (click)="cancel()" class="px-5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition-colors">Discard</button>
+          
+          <!-- Individual Publish (Only if no queue) -->
           <button *ngIf="queueIds.length === 0" [disabled]="!selectedCategory || isBulkProcessing" (click)="confirm()" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800 shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
             Publish Product
+          </button>
+
+          <!-- Bulk Publish (If queue exists) -->
+          <button *ngIf="queueIds.length > 0" [disabled]="!selectedCategory || isBulkProcessing" (click)="startBulkPublish()" class="px-8 py-2.5 rounded-xl bg-[#c5a059] text-black font-black uppercase tracking-widest text-[11px] hover:bg-[#d4b476] shadow-xl shadow-[#c5a059]/30 transition-all disabled:opacity-30 disabled:grayscale flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            Start Bulk Publish
           </button>
         </div>
       </div>
@@ -92,22 +100,19 @@ import { concatMap, delay, from, of, catchError, finalize } from 'rxjs';
             </div>
           </div>
 
-          <!-- Bulk Actions Card -->
+          <!-- Bulk Actions Info Card -->
           <div class="bg-slate-900 rounded-3xl p-6 shadow-xl shadow-slate-900/20 text-white border border-white/5" *ngIf="queueIds.length > 0">
             <h3 class="text-lg font-bold flex items-center gap-2 mb-2">
               <span class="w-8 h-8 rounded-lg bg-[#c5a059] flex items-center justify-center text-black">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </span>
-              Auto-Publish Engine
+              Auto-Publish System
             </h3>
-            <p class="text-white/60 text-xs mb-6">Process all {{ queueIds.length + 1 }} remaining items automatically with the selected category and price above.</p>
-            
-            <button [disabled]="!selectedCategory || isBulkProcessing" 
-                    (click)="startBulkPublish()"
-                    class="w-full py-4 bg-[#c5a059] hover:bg-[#d4b476] text-black font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl transition-all disabled:opacity-30 disabled:grayscale shadow-lg shadow-[#c5a059]/30">
-              {{ isBulkProcessing ? 'Processing Batch...' : 'Start Bulk Publish' }}
-            </button>
-            <p class="mt-3 text-[10px] text-white/30 text-center font-bold uppercase tracking-widest">Estimated Time: {{ (queueIds.length + 1) * 2 }} seconds</p>
+            <p class="text-white/60 text-xs">Ready to process all {{ queueIds.length + 1 }} items in the current batch automatically.</p>
+            <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+               <span class="text-[10px] text-white/30 font-bold uppercase tracking-widest">Est. Time</span>
+               <span class="text-[10px] text-[#c5a059] font-black uppercase tracking-widest">{{ (queueIds.length + 1) * 2 }} SECONDS</span>
+            </div>
           </div>
         </div>
         
