@@ -1,17 +1,19 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CategoryService } from '../../core/services/category.service';
 import { CartService } from '../../core/services/cart.service';
 import { SettingService } from '../../core/services/setting.service';
 import { Category } from '../../core/models/category.model';
 import { SystemSetting } from '../../core/models/system-setting.model';
-import { Observable, map } from 'rxjs';
+import { Observable, map, Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { ProductService } from '../../core/services/product.service';
 
 @Component({
   selector: 'app-user-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule],
   template: `
     <!-- Top Navigation Bar -->
     <header class="fixed top-0 inset-x-0 z-50 bg-[#020202]/80 backdrop-blur-md border-b border-white/5">
@@ -97,7 +99,86 @@ import { Observable, map } from 'rxjs';
         </nav>
 
         <!-- Right Actions -->
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-4 md:gap-8">
+          <!-- Search -->
+          <div class="relative h-full flex items-center">
+            <div [class.w-48]="showSearch" [class.md:w-64]="showSearch" [class.w-0]="!showSearch" 
+                 class="overflow-hidden transition-all duration-500 ease-out flex items-center bg-white/5 rounded-full border border-white/10 backdrop-blur-sm group"
+                 [class.opacity-0]="!showSearch" [class.opacity-100]="showSearch">
+              <input type="text" 
+                     [(ngModel)]="searchQuery" 
+                     (input)="onSearchInput()"
+                     (keyup.enter)="executeSearch()"
+                     placeholder="ARA..." 
+                     class="bg-transparent border-none focus:ring-0 text-[10px] sm:text-xs text-white px-4 py-2 w-full uppercase tracking-[0.2em] placeholder:text-white/20">
+            </div>
+            
+            <button (click)="toggleSearch()" 
+                    class="text-white hover:text-[#c5a059] transition-all duration-300 p-2 hover:scale-110 active:scale-95"
+                    [class.text-[#c5a059]]="showSearch">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path *ngIf="!showSearch" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path *ngIf="showSearch" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <!-- Search Dropdown -->
+            <div *ngIf="showSearch && (searchResultsProducts.length > 0 || searchResultsCategories.length > 0 || (searchQuery.length > 2 && isSearching))" 
+                 class="absolute top-full right-0 mt-4 w-72 sm:w-96 bg-[#0a0a0a]/98 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[60] animate-in fade-in slide-in-from-top-4 duration-300">
+              
+              <!-- Searching Indicator -->
+              <div *ngIf="isSearching" class="p-4 flex items-center justify-center">
+                <div class="w-4 h-4 border-2 border-[#c5a059]/30 border-t-[#c5a059] rounded-full animate-spin"></div>
+              </div>
+
+              <!-- No Results -->
+              <div *ngIf="!isSearching && searchResultsProducts.length === 0 && searchResultsCategories.length === 0 && searchQuery.length > 2" 
+                   class="p-8 text-center text-white/30 text-xs uppercase tracking-widest font-bold">
+                Sonuç bulunamadı
+              </div>
+
+              <!-- Categories -->
+              <div *ngIf="searchResultsCategories.length > 0" class="border-b border-white/5">
+                <div class="px-5 py-3 text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Kategoriler</div>
+                <a *ngFor="let cat of searchResultsCategories" 
+                   [routerLink]="['/products']" [queryParams]="{category: cat.id}"
+                   (click)="closeSearch()"
+                   class="flex items-center gap-3 px-5 py-3 text-xs text-white/70 hover:text-white hover:bg-white/5 transition-all group">
+                   <div class="w-1.5 h-1.5 rounded-full bg-[#c5a059]/40 group-hover:bg-[#c5a059] transition-colors"></div>
+                   {{ cat.name }}
+                </a>
+              </div>
+
+              <!-- Products -->
+              <div *ngIf="searchResultsProducts.length > 0">
+                <div class="px-5 py-3 text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Ürünler</div>
+                <div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+                  <a *ngFor="let product of searchResultsProducts" 
+                     [routerLink]="['/product', product.id]"
+                     (click)="closeSearch()"
+                     class="flex items-center gap-4 px-4 py-3 hover:bg-white/5 transition-all group border-b border-white/5 last:border-0">
+                     <div class="w-12 h-16 rounded-lg bg-[#111] overflow-hidden border border-white/5 flex-shrink-0">
+                       <img *ngIf="product.images.length > 0" 
+                            [src]="getMainImageUrl(product)" 
+                            class="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500">
+                     </div>
+                     <div class="flex flex-col gap-1 min-w-0">
+                       <span class="text-xs font-bold text-white/80 group-hover:text-white transition-colors truncate uppercase tracking-tight">{{ product.title }}</span>
+                       <span class="text-[10px] font-black text-[#c5a059]">{{ product.price > 0 ? (product.price | number:'1.0-0') + ' ₺' : 'FİYAT SORUNUZ' }}</span>
+                     </div>
+                  </a>
+                </div>
+              </div>
+
+              <!-- View All -->
+              <button *ngIf="searchResultsProducts.length > 0 || searchResultsCategories.length > 0"
+                      (click)="executeSearch()"
+                      class="w-full p-4 text-[10px] font-black text-[#c5a059] uppercase tracking-[.2em] bg-[#c5a059]/5 hover:bg-[#c5a059]/10 transition-colors border-t border-white/10">
+                Tüm Sonuçları Gör
+              </button>
+            </div>
+          </div>
+
           <a routerLink="/cart" class="relative text-white hover:text-[#c5a059] transition-colors group">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -189,14 +270,56 @@ export class UserLayoutComponent implements OnInit {
   showMobileMenu = false;
   cartCount$: Observable<number>;
 
+  // Search
+  showSearch = false;
+  searchQuery = '';
+  searchResultsProducts: any[] = [];
+  searchResultsCategories: Category[] = [];
+  isSearching = false;
+  private searchSubject = new Subject<string>();
+
   constructor(
     private categoryService: CategoryService,
     private cartService: CartService,
-    private settingService: SettingService
+    private settingService: SettingService,
+    private productService: ProductService,
+    private router: Router
   ) {
     this.cartCount$ = this.cartService.cartItems$.pipe(
       map(items => items.reduce((acc, item) => acc + item.quantity, 0))
     );
+
+    // Live Search Logic
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (query.length < 3) {
+          this.isSearching = false;
+          return of({ products: [], categories: [] });
+        }
+        this.isSearching = true;
+        
+        // Search Products (which now includes category filter on backend)
+        const products$ = this.productService.getProducts(query);
+        
+        // Local Category Search
+        const matchingCategories = this.categories.filter(c => 
+          c.name.toLowerCase().includes(query.toLowerCase())
+        );
+
+        return products$.pipe(
+          map(products => ({
+            products: products.slice(0, 5),
+            categories: matchingCategories.slice(0, 3)
+          }))
+        );
+      })
+    ).subscribe(results => {
+      this.searchResultsProducts = results.products;
+      this.searchResultsCategories = results.categories;
+      this.isSearching = false;
+    });
   }
 
   ngOnInit(): void {
@@ -206,6 +329,36 @@ export class UserLayoutComponent implements OnInit {
 
   getSettingValue(key: string): string {
     return this.settings.find(s => s.key === key)?.value || '';
+  }
+
+  // Search Methods
+  toggleSearch() {
+    this.showSearch = !this.showSearch;
+    if (!this.showSearch) {
+      this.closeSearch();
+    }
+  }
+
+  onSearchInput() {
+    this.searchSubject.next(this.searchQuery);
+  }
+
+  executeSearch() {
+    if (this.searchQuery.trim()) {
+      this.router.navigate(['/products'], { queryParams: { search: this.searchQuery } });
+      this.closeSearch();
+    }
+  }
+
+  closeSearch() {
+    this.showSearch = false;
+    this.searchQuery = '';
+    this.searchResultsProducts = [];
+    this.searchResultsCategories = [];
+  }
+
+  getMainImageUrl(product: any): string {
+    return this.productService.getMainImageUrl(product);
   }
 }
 

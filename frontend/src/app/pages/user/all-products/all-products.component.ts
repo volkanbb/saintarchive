@@ -34,7 +34,7 @@ import { Title, Meta } from '@angular/platform-browser';
             <div class="h-1 w-20 bg-[#c5a059] mt-2"></div>
           </div>
           <p class="text-white text-base font-bold font-mono" style="text-shadow: 0 1px 6px #000;">
-            {{filteredProducts.length}} ÜRÜN BULUNDU
+            {{filteredProducts.length}} ÜRÜN {{ searchTerm ? 'BULUNDU' : 'LİSTELENİYOR' }}
           </p>
         </div>
 
@@ -129,6 +129,7 @@ export class AllProductsComponent implements OnInit {
   categories: Category[] = [];
   selectedCategoryId: string | null = null;
   selectedSubCategoryId: string | null = null;
+  searchTerm: string | null = null;
 
   constructor(
     private productService: ProductService,
@@ -140,20 +141,25 @@ export class AllProductsComponent implements OnInit {
 
   ngOnInit(): void {
     this.categoryService.getCategories().subscribe(data => this.categories = data);
-    this.productService.getProducts().subscribe(data => {
-      this.products = data;
+    
+    // Listen to query params for search or category changes
+    this.route.queryParams.subscribe(params => {
+      const search = params['search'];
+      const categoryId = params['category'];
       
-      // Update Initial SEO
-      this.updateSeoTags();
+      this.searchTerm = search || null;
+      this.selectedCategoryId = categoryId || null;
+      this.selectedSubCategoryId = null;
 
-      // Check for category query param
-      this.route.queryParams.subscribe(params => {
-        if (params['category']) {
-          this.filterByCategory(params['category']);
-        } else {
-          this.applyFilters();
-        }
-      });
+      this.loadProducts();
+    });
+  }
+
+  loadProducts() {
+    this.productService.getProducts(this.searchTerm || undefined).subscribe(data => {
+      this.products = data;
+      this.applyFilters();
+      this.updateSeoTags(this.categories.find(c => c.id === this.selectedCategoryId)?.name);
     });
   }
 

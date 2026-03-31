@@ -28,7 +28,10 @@ public class ProductsController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query = query.Where(p => p.Title.Contains(search));
+            query = query.Where(p => 
+                p.Title.Contains(search) || 
+                p.Category.Name.Contains(search) || 
+                (p.SubCategory != null && p.SubCategory.Name.Contains(search)));
         }
 
         if (subCategoryId.HasValue)
