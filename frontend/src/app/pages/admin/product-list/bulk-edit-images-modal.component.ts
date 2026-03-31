@@ -1,15 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Product } from '../../../core/models/product.model';
 import { ProductService } from '../../../core/services/product.service';
 
 @Component({
   selector: 'app-bulk-edit-images-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DragDropModule],
   template: `
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div class="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" (click)="onBackdropClick($event)">
+      <div class="bg-neutral-900 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl" (click)="$event.stopPropagation()">
         <!-- Header -->
         <div class="p-6 border-b border-white/5 flex items-center justify-between">
           <div>
@@ -23,21 +24,34 @@ import { ProductService } from '../../../core/services/product.service';
 
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-6 scrollbar-hide">
-          <div *ngFor="let product of selectedProducts" class="mb-8 last:mb-0">
+          <div *ngFor="let product of selectedProducts" class="mb-10 last:mb-0">
             <h3 class="text-xs font-bold text-[#c5a059] uppercase tracking-widest mb-4 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#c5a059]"></span>
               {{product.title}}
+              <span class="text-white/20 font-normal lowercase ml-auto">Drag images to reorder</span>
             </h3>
             
-            <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+            <div #imageList="cdkDropList" 
+                 cdkDropList 
+                 cdkDropListOrientation="horizontal"
+                 (cdkDropListDropped)="onImageDropped($event, product)"
+                 class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+              
               <div *ngFor="let img of product.images" 
+                   cdkDrag
+                   [cdkDragData]="img"
                    (click)="toggleImage(img.id)"
                    [ngClass]="isSelected(img.id) ? 'ring-2 ring-[#c5a059]' : ''"
                    class="relative aspect-square bg-black rounded-xl overflow-hidden cursor-pointer group transition-all">
-                <img [src]="getProxyUrl(img.url)" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                
+                <!-- Placeholder while dragging -->
+                <div *cdkDragPlaceholder class="absolute inset-0 bg-white/5 border-2 border-dashed border-white/20 rounded-xl"></div>
+                
+                <img [src]="getProxyUrl(img.url)" 
+                     class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                 
                 <!-- Selection Overlay -->
-                <div *ngIf="isSelected(img.id)" class="absolute inset-0 bg-[#c5a059]/20 flex items-center justify-center">
+                <div *ngIf="isSelected(img.id)" class="absolute inset-0 bg-[#c5a059]/20 flex items-center justify-center pointer-events-none">
                   <div class="bg-[#c5a059] rounded-full p-1 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -45,7 +59,14 @@ import { ProductService } from '../../../core/services/product.service';
                   </div>
                 </div>
 
-                <div *ngIf="img.isMain" class="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase border border-white/10">Main</div>
+                <div *ngIf="img.isMain" class="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase border border-white/10 pointer-events-none">Main</div>
+                
+                <!-- Drag Handle Hint on Hover -->
+                <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-1 pointer-events-none">
+                  <div class="bg-black/40 rounded p-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -53,17 +74,31 @@ import { ProductService } from '../../../core/services/product.service';
 
         <!-- Footer -->
         <div class="p-6 border-t border-white/5 bg-black/20 flex items-center justify-between">
-          <p class="text-white/40 text-[10px] font-bold uppercase tracking-widest">
-            {{selectedImageIds.size}} Images Selected for Deletion
-          </p>
+          <div class="flex flex-col gap-1">
+             <p class="text-white/40 text-[10px] font-bold uppercase tracking-widest">
+              {{selectedImageIds.size}} Images Selected for Deletion
+            </p>
+             <p *ngIf="hasChanges" class="text-[#c5a059] text-[9px] font-bold uppercase animate-pulse">
+                Order changes detected
+             </p>
+          </div>
           <div class="flex gap-4">
             <button (click)="close.emit()" class="px-6 py-3 rounded-xl border border-white/5 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest">Cancel</button>
+            
             <button (click)="confirmDelete()" 
-                    [disabled]="selectedImageIds.size === 0 || isDeleting"
-                    [class.opacity-50]="selectedImageIds.size === 0 || isDeleting"
+                    *ngIf="selectedImageIds.size > 0"
+                    [disabled]="isProcessing"
                     class="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2">
-              <span *ngIf="isDeleting" class="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-              {{isDeleting ? 'Deleting...' : 'Delete Selected'}}
+              <span *ngIf="isProcessing" class="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+              {{isProcessing ? 'Deleting...' : 'Delete Selected'}}
+            </button>
+
+            <button (click)="saveAllChanges()" 
+                    [disabled]="!hasChanges || isProcessing"
+                    [class.opacity-50]="!hasChanges || isProcessing"
+                    class="px-8 py-3 rounded-xl bg-[#c5a059] hover:bg-[#b08d4a] text-black text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2">
+              <span *ngIf="isProcessing" class="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin"></span>
+              {{isProcessing ? 'Saving...' : 'Save All Changes'}}
             </button>
           </div>
         </div>
@@ -73,6 +108,22 @@ import { ProductService } from '../../../core/services/product.service';
   styles: [`
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .cdk-drag-preview {
+      box-sizing: border-box;
+      border-radius: 12px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+      opacity: 0.8;
+      z-index: 1000 !important;
+    }
+
+    .cdk-drag-animating {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
+
+    .cdk-drop-list-dragging .cdk-drag {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
   `]
 })
 export class BulkEditImagesModalComponent implements OnInit {
@@ -81,11 +132,32 @@ export class BulkEditImagesModalComponent implements OnInit {
   @Output() deleted = new EventEmitter<void>();
 
   selectedImageIds = new Set<string>();
-  isDeleting = false;
+  isProcessing = false;
+  hasChanges = false;
 
   constructor(private productService: ProductService) {}
 
   ngOnInit(): void {}
+
+  onImageDropped(event: CdkDragDrop<any[]>, product: Product) {
+    if (event.previousIndex === event.currentIndex) return;
+    
+    moveItemInArray(product.images, event.previousIndex, event.currentIndex);
+    this.hasChanges = true;
+    
+    // Update sortOrder local fields (optional but good for consistency)
+    product.images.forEach((img, idx) => img.sortOrder = idx);
+  }
+
+  onBackdropClick(event: MouseEvent) {
+    if (this.hasChanges) {
+      if (confirm('You have unsaved changes. Are you sure you want to exit?')) {
+        this.close.emit();
+      }
+    } else {
+      this.close.emit();
+    }
+  }
 
   toggleImage(id: string) {
     if (this.selectedImageIds.has(id)) {
@@ -103,21 +175,60 @@ export class BulkEditImagesModalComponent implements OnInit {
     return this.productService.getProxyUrl(url);
   }
 
+  saveAllChanges() {
+    this.isProcessing = true;
+    
+    // For each product, we send the new images list (which contains the new order)
+    // The backend UpdateProduct handles replacing images and preserving order.
+    const updateTasks = this.selectedProducts.map(p => 
+      this.productService.updateProduct(p.id!, p)
+    );
+
+    // We use a simple counter to track completion or forkJoin if it's many.
+    // For now, let's just do them sequentially or concurrently and wait for all.
+    // Since we don't have a specific bulk image update endpoint, we use the regular one.
+    
+    // Optimization: Only update products that actually changed (we could track this per product)
+    
+    let completedCount = 0;
+    updateTasks.forEach(task => {
+      task.subscribe({
+        next: () => {
+          completedCount++;
+          if (completedCount === updateTasks.length) {
+            this.isProcessing = false;
+            this.hasChanges = false;
+            this.deleted.emit(); // Signal to refresh list
+            this.close.emit();
+          }
+        },
+        error: (err) => {
+          console.error('Error updating product images:', err);
+          completedCount++;
+          if (completedCount === updateTasks.length) {
+            this.isProcessing = false;
+            alert('Some updates failed. Please check console for details.');
+          }
+        }
+      });
+    });
+  }
+
   confirmDelete() {
     if (this.selectedImageIds.size === 0) return;
     
     if (confirm(`Are you sure you want to delete ${this.selectedImageIds.size} selected images? This action cannot be undone.`)) {
-      this.isDeleting = true;
+      this.isProcessing = true;
       this.productService.bulkDeleteImages(Array.from(this.selectedImageIds)).subscribe({
         next: () => {
-          this.isDeleting = false;
+          this.isProcessing = false;
           this.deleted.emit();
           this.close.emit();
         },
         error: (err: any) => {
           console.error('Error deleting images:', err);
           alert('An error occurred while deleting images.');
-          this.isDeleting = false;
+          this.isProcessing = false;
         }
       });
     }

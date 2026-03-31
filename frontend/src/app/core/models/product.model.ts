@@ -2,6 +2,7 @@ export interface ProductImage {
   id: string;
   url: string;
   isMain: boolean;
+  sortOrder: number;
 }
 
 export interface Size {

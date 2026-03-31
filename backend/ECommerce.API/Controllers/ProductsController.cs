@@ -57,13 +57,14 @@ public class ProductsController : ControllerBase
                 SubCategoryId = p.SubCategoryId,
                 SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : null,
                 Images = p.Images
-                    .OrderByDescending(i => i.IsMain)
-                    .ThenBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
+                    .ThenByDescending(i => i.IsMain)
                     .Select(i => new ProductImageDto
                     {
                         Id = i.Id,
                         Url = i.Url,
-                        IsMain = i.IsMain
+                        IsMain = i.IsMain,
+                        SortOrder = i.SortOrder
                     }).ToList(),
                 Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
@@ -105,13 +106,14 @@ public class ProductsController : ControllerBase
                 SubCategoryId = p.SubCategoryId,
                 SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : null,
                 Images = p.Images
-                    .OrderByDescending(i => i.IsMain)
-                    .ThenBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
+                    .ThenByDescending(i => i.IsMain)
                     .Select(i => new ProductImageDto
                     {
                         Id = i.Id,
                         Url = i.Url,
-                        IsMain = i.IsMain
+                        IsMain = i.IsMain,
+                        SortOrder = i.SortOrder
                     }).ToList(),
                 Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
@@ -142,13 +144,14 @@ public class ProductsController : ControllerBase
                 SubCategoryId = p.SubCategoryId,
                 SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : null,
                 Images = p.Images
-                    .OrderByDescending(i => i.IsMain)
-                    .ThenBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
+                    .ThenByDescending(i => i.IsMain)
                     .Select(i => new ProductImageDto
                     {
                         Id = i.Id,
                         Url = i.Url,
-                        IsMain = i.IsMain
+                        IsMain = i.IsMain,
+                        SortOrder = i.SortOrder
                     }).ToList(),
                 Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
@@ -181,13 +184,14 @@ public class ProductsController : ControllerBase
                 SubCategoryId = p.SubCategoryId,
                 SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : null,
                 Images = p.Images
-                    .OrderByDescending(i => i.IsMain)
-                    .ThenBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
+                    .ThenByDescending(i => i.IsMain)
                     .Select(i => new ProductImageDto
                     {
                         Id = i.Id,
                         Url = i.Url,
-                        IsMain = i.IsMain
+                        IsMain = i.IsMain,
+                        SortOrder = i.SortOrder
                     }).ToList(),
                 Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
             })
@@ -226,13 +230,15 @@ public class ProductsController : ControllerBase
             var existingImages = _context.ProductImages.Where(i => i.ProductId == id);
             _context.ProductImages.RemoveRange(existingImages);
 
+            int currentOrder = 0;
             foreach (var img in productDto.Images)
             {
                 _context.ProductImages.Add(new Domain.Entities.ProductImage
                 {
                     ProductId = id,
                     Url = img.Url,
-                    IsMain = img.IsMain
+                    IsMain = img.IsMain,
+                    SortOrder = currentOrder++
                 });
             }
         }
@@ -267,13 +273,15 @@ public class ProductsController : ControllerBase
 
         if (productDto.Images != null && productDto.Images.Any())
         {
+            int currentOrder = 0;
             foreach (var img in productDto.Images)
             {
                 _context.ProductImages.Add(new Domain.Entities.ProductImage
                 {
                     ProductId = product.Id,
                     Url = img.Url,
-                    IsMain = img.IsMain
+                    IsMain = img.IsMain,
+                    SortOrder = currentOrder++
                 });
             }
         }
