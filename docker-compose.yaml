@@ -32,8 +32,6 @@ services:
     container_name: ecommerce_frontend
     depends_on:
       - backend
-    ports:
-      - "80:80"
     restart: always
 
 volumes:
