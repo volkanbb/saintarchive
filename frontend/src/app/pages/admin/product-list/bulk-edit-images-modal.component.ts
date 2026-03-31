@@ -33,39 +33,48 @@ import { ProductService } from '../../../core/services/product.service';
             
             <div #imageList="cdkDropList" 
                  cdkDropList 
-                 cdkDropListOrientation="horizontal"
+                 cdkDropListOrientation="vertical"
                  (cdkDropListDropped)="onImageDropped($event, product)"
-                 class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                 class="flex flex-col gap-3">
               
               <div *ngFor="let img of product.images" 
                    cdkDrag
                    [cdkDragData]="img"
                    (click)="toggleImage(img.id)"
-                   [ngClass]="isSelected(img.id) ? 'ring-2 ring-[#c5a059]' : ''"
-                   class="relative aspect-square bg-black rounded-xl overflow-hidden cursor-pointer group transition-all">
+                   [ngClass]="isSelected(img.id) ? 'ring-2 ring-[#c5a059] bg-[#c5a059]/5' : 'bg-white/5'"
+                   class="relative flex items-center gap-4 p-3 rounded-2xl cursor-pointer group transition-all border border-white/5 hover:border-white/10">
                 
                 <!-- Placeholder while dragging -->
-                <div *cdkDragPlaceholder class="absolute inset-0 bg-white/5 border-2 border-dashed border-white/20 rounded-xl"></div>
+                <div *cdkDragPlaceholder class="h-24 w-full bg-white/5 border-2 border-dashed border-white/20 rounded-2xl"></div>
+
+                <!-- Drag Handle -->
+                <div class="text-white/20 group-hover:text-white/40 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9h14M5 15h14"/></svg>
+                </div>
                 
-                <img [src]="getProxyUrl(img.url)" 
-                     class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
-                
-                <!-- Selection Overlay -->
-                <div *ngIf="isSelected(img.id)" class="absolute inset-0 bg-[#c5a059]/20 flex items-center justify-center pointer-events-none">
-                  <div class="bg-[#c5a059] rounded-full p-1 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
+                <!-- Image Preview (Increased size) -->
+                <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-black shrink-0">
+                  <img [src]="getProxyUrl(img.url)" 
+                       class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity">
+                  
+                  <div *ngIf="img.isMain" class="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase border border-white/10 pointer-events-none">Main</div>
+                </div>
+
+                <!-- Image Details / Info -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] text-white/40 font-mono truncate mb-1">{{img.url.split('/').pop()}}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[9px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60">Position: {{product.images.indexOf(img) + 1}}</span>
+                    <span *ngIf="isSelected(img.id)" class="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/20">Selected for deletion</span>
                   </div>
                 </div>
 
-                <div *ngIf="img.isMain" class="absolute top-1 left-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold text-white uppercase border border-white/10 pointer-events-none">Main</div>
-                
-                <!-- Drag Handle Hint on Hover -->
-                <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-start justify-end p-1 pointer-events-none">
-                  <div class="bg-black/40 rounded p-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l7-7 7 7M5 15l7 7 7-7"/></svg>
-                  </div>
+                <!-- Selection Checkbox (Visual only, click handled by row) -->
+                <div class="w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center shrink-0"
+                     [ngClass]="isSelected(img.id) ? 'bg-[#c5a059] border-[#c5a059]' : 'border-white/10 group-hover:border-white/30'">
+                  <svg *ngIf="isSelected(img.id)" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
                 </div>
               </div>
             </div>
