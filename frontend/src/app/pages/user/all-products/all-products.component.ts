@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
@@ -43,23 +43,47 @@ import { Title, Meta } from '@angular/platform-browser';
           <!-- Main Category Dropdown -->
           <div class="max-w-xs relative">
             <label class="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-2 block font-black">KATEGORİ SEÇİN</label>
-            <div class="relative group">
-              <select 
-                (change)="onCategoryChange($event)"
-                class="w-full bg-white/5 text-white border border-white/10 rounded-lg px-5 py-4 appearance-none focus:outline-none focus:border-[#c5a059] transition-all font-bold uppercase tracking-widest text-xs cursor-pointer hover:bg-white/10 group-hover:border-white/20"
+            
+            <div class="relative">
+              <!-- Dropdown Header -->
+              <button 
+                (click)="toggleCategoryDropdown(); $event.stopPropagation()"
+                class="w-full flex items-center justify-between bg-[#0a0a0a]/60 backdrop-blur-md text-white border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:border-[#c5a059]/50 transition-all font-display font-bold uppercase tracking-widest text-xs hover:bg-[#0a0a0a]/80 group"
               >
-                <option value="" [selected]="selectedCategoryId === null">TÜMÜ</option>
-                <option 
-                  *ngFor="let cat of categories" 
-                  [value]="cat.id" 
-                  [selected]="selectedCategoryId === cat.id"
+                <span [class.text-[#c5a059]]="selectedCategoryId !== null">{{ displayTitle }}</span>
+                <svg 
+                  class="w-4 h-4 text-[#c5a059] transition-transform duration-300" 
+                  [class.rotate-180]="isCategoryDropdownOpen"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
-                  {{ cat.name }}
-                </option>
-              </select>
-              <!-- Premium Arrow Icon -->
-              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#c5a059]">
-                <svg class="w-4 h-4 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div 
+                *ngIf="isCategoryDropdownOpen"
+                class="absolute top-full left-0 right-0 mt-2 z-[100] bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              >
+                <div class="max-h-80 overflow-y-auto custom-scrollbar">
+                  <button 
+                    (click)="selectCategory(null)"
+                    class="w-full text-left px-5 py-4 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white/5 border-b border-white/5"
+                    [class.text-[#c5a059]]="selectedCategoryId === null"
+                    [class.text-white/70]="selectedCategoryId !== null"
+                  >
+                    TÜMÜ
+                  </button>
+                  <button 
+                    *ngFor="let cat of categories"
+                    (click)="selectCategory(cat.id)"
+                    class="w-full text-left px-5 py-4 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white/5 border-b border-white/5 last:border-0"
+                    [class.text-[#c5a059]]="selectedCategoryId === cat.id"
+                    [class.text-white/70]="selectedCategoryId !== cat.id"
+                  >
+                    {{ cat.name }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -144,8 +168,27 @@ export class AllProductsComponent implements OnInit {
     private categoryService: CategoryService,
     private route: ActivatedRoute,
     private titleService: Title,
-    private metaService: Meta
+    private metaService: Meta,
+    private el: ElementRef
   ) {}
+
+  isCategoryDropdownOpen = false;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.el.nativeElement.contains(event.target)) {
+      this.isCategoryDropdownOpen = false;
+    }
+  }
+
+  toggleCategoryDropdown() {
+    this.isCategoryDropdownOpen = !this.isCategoryDropdownOpen;
+  }
+
+  selectCategory(categoryId: string | null) {
+    this.filterByCategory(categoryId);
+    this.isCategoryDropdownOpen = false;
+  }
 
   ngOnInit(): void {
     this.categoryService.getCategories().subscribe(data => this.categories = data);
@@ -192,12 +235,6 @@ export class AllProductsComponent implements OnInit {
   get currentSubCategories(): Category[] {
     if (!this.selectedCategoryId) return [];
     return this.categories.find(c => c.id === this.selectedCategoryId)?.subCategories || [];
-  }
-
-  onCategoryChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const value = select.value === 'null' ? null : select.value;
-    this.filterByCategory(value);
   }
 
   filterBySubCategory(subId: string | null) {
