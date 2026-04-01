@@ -29,7 +29,7 @@ import { Title, Meta } from '@angular/platform-browser';
         <div class="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-4">
           <div>
             <h1 class="text-5xl font-display font-bold text-white tracking-widest uppercase" style="text-shadow: 0 2px 8px #000;">
-              TÜM ÜRÜNLER
+              {{ displayTitle }}
             </h1>
             <div class="h-1 w-20 bg-[#c5a059] mt-2"></div>
           </div>
@@ -38,42 +38,50 @@ import { Title, Meta } from '@angular/platform-browser';
           </p>
         </div>
 
-        <!-- Category Filter Chips -->
-        <div class="flex flex-wrap gap-3 mb-12 overflow-x-auto pb-2">
-          <button 
-            (click)="filterByCategory(null)"
-            [class]="selectedCategoryId === null 
-              ? 'bg-[#c5a059] text-black font-bold px-5 py-2 rounded-full text-sm uppercase tracking-wider transition-all' 
-              : 'bg-white/10 text-white/70 font-bold px-5 py-2 rounded-full text-sm uppercase tracking-wider hover:bg-white/20 transition-all'">
-            Tümü
-          </button>
-          <button 
-            *ngFor="let cat of categories"
-            (click)="filterByCategory(cat.id)"
-            [class]="selectedCategoryId === cat.id 
-              ? 'bg-[#c5a059] text-black font-bold px-5 py-2 rounded-full text-sm uppercase tracking-wider transition-all' 
-              : 'bg-white/10 text-white/70 font-bold px-5 py-2 rounded-full text-sm uppercase tracking-wider hover:bg-white/20 transition-all'">
-            {{ cat.name }}
-          </button>
-        </div>
+        <!-- Category Selection Section -->
+        <div class="mb-12 flex flex-col gap-6">
+          <!-- Main Category Dropdown -->
+          <div class="max-w-xs relative">
+            <label class="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-2 block font-black">KATEGORİ SEÇİN</label>
+            <div class="relative group">
+              <select 
+                (change)="onCategoryChange($event)"
+                class="w-full bg-white/5 text-white border border-white/10 rounded-lg px-5 py-4 appearance-none focus:outline-none focus:border-[#c5a059] transition-all font-bold uppercase tracking-widest text-xs cursor-pointer hover:bg-white/10 group-hover:border-white/20"
+              >
+                <option value="" [selected]="selectedCategoryId === null">TÜMÜ</option>
+                <option 
+                  *ngFor="let cat of categories" 
+                  [value]="cat.id" 
+                  [selected]="selectedCategoryId === cat.id"
+                >
+                  {{ cat.name }}
+                </option>
+              </select>
+              <!-- Premium Arrow Icon -->
+              <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-[#c5a059]">
+                <svg class="w-4 h-4 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+          </div>
 
-        <!-- Sub-category Filter Chips -->
-        <div class="flex flex-wrap gap-2 mb-12 overflow-x-auto pb-2 animate-fade-in" *ngIf="selectedCategoryId && currentSubCategories.length > 0">
-           <button 
-            (click)="filterBySubCategory(null)"
-            [class]="selectedSubCategoryId === null 
-              ? 'bg-white text-black font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider transition-all border border-white' 
-              : 'bg-transparent text-white/50 border border-white/10 font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider hover:bg-white/5 transition-all'">
-            Tümü
-          </button>
-          <button 
-            *ngFor="let sub of currentSubCategories"
-            (click)="filterBySubCategory(sub.id)"
-            [class]="selectedSubCategoryId === sub.id 
-              ? 'bg-white text-black font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider transition-all border border-white' 
-              : 'bg-transparent text-white/50 border border-white/10 font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider hover:bg-white/5 transition-all'">
-            {{ sub.name }}
-          </button>
+          <!-- Sub-category Filter Chips -->
+          <div class="flex flex-wrap gap-2 pb-2 animate-fade-in" *ngIf="selectedCategoryId && currentSubCategories.length > 0">
+             <button 
+              (click)="filterBySubCategory(null)"
+              [class]="selectedSubCategoryId === null 
+                ? 'bg-white text-black font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider transition-all border border-white' 
+                : 'bg-transparent text-white/50 border border-white/10 font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider hover:bg-white/5 transition-all'">
+              Tümü
+            </button>
+            <button 
+              *ngFor="let sub of currentSubCategories"
+              (click)="filterBySubCategory(sub.id)"
+              [class]="selectedSubCategoryId === sub.id 
+                ? 'bg-white text-black font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider transition-all border border-white' 
+                : 'bg-transparent text-white/50 border border-white/10 font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider hover:bg-white/5 transition-all'">
+              {{ sub.name }}
+            </button>
+          </div>
         </div>
 
         <!-- Product Grid -->
@@ -175,9 +183,21 @@ export class AllProductsComponent implements OnInit {
     this.metaService.updateTag({ property: 'og:description', content: description });
   }
 
+  get displayTitle(): string {
+    if (!this.selectedCategoryId) return 'TÜM ÜRÜNLER';
+    const cat = this.categories.find(c => c.id === this.selectedCategoryId);
+    return cat ? cat.name : 'TÜM ÜRÜNLER';
+  }
+
   get currentSubCategories(): Category[] {
     if (!this.selectedCategoryId) return [];
     return this.categories.find(c => c.id === this.selectedCategoryId)?.subCategories || [];
+  }
+
+  onCategoryChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const value = select.value === 'null' ? null : select.value;
+    this.filterByCategory(value);
   }
 
   filterBySubCategory(subId: string | null) {
