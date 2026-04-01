@@ -28,15 +28,6 @@ import { ProductService } from '../../core/services/product.service';
         <nav class="hidden md:flex items-center space-x-12 font-display text-lg tracking-widest text-white/60">
           <a routerLink="/" routerLinkActive="text-white" [routerLinkActiveOptions]="{exact: true}" class="hover:text-white transition-colors uppercase">Archive</a>
           
-          <!-- Selected Navbar Categories -->
-          <ng-container *ngFor="let navCat of navbarCategories">
-            <a [routerLink]="['/products']" [queryParams]="{category: navCat.id}"
-               routerLinkActive="text-white"
-               class="hover:text-white transition-colors uppercase">
-              {{ navCat.name }}
-            </a>
-          </ng-container>
-
           <!-- Collection Dropdown -->
           <div class="relative" (mouseenter)="showDropdown = true" (mouseleave)="showDropdown = false">
             <a routerLink="/products" class="hover:text-white transition-colors uppercase cursor-pointer flex items-center gap-1">
@@ -64,6 +55,15 @@ import { ProductService } from '../../core/services/product.service';
               </div>
             </div>
           </div>
+
+          <!-- Selected Navbar Categories (Dynamic) -->
+          <ng-container *ngFor="let navCat of navbarCategories">
+            <a [routerLink]="['/products']" [queryParams]="{category: navCat.id}"
+               routerLinkActive="text-white"
+               class="hover:text-white transition-colors uppercase">
+              {{ navCat.name }}
+            </a>
+          </ng-container>
 
           <!-- Contact Dropdown -->
           <div class="relative" (mouseenter)="showContactDropdown = true" (mouseleave)="showContactDropdown = false">
@@ -347,7 +347,7 @@ export class UserLayoutComponent implements OnInit {
       this.categories = data;
       this.navbarCategories = data
         .filter(c => c.showInNavbar)
-        .sort((a, b) => (a.navbarOrder || 0) - (b.navbarOrder || 0));
+        .sort((a, b) => a.name.localeCompare(b.name));
     });
     this.settingService.getSettings().subscribe(data => this.settings = data);
   }
