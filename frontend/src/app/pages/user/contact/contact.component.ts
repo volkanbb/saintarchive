@@ -20,7 +20,7 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
         <div class="mb-20">
           <h1 class="text-6xl md:text-8xl font-display font-black tracking-tighter uppercase leading-[0.85]">
             SAINT <br> 
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-brand-600">ARCHIVE</span>
+            <span class="text-archive-outline">ARCHIVE</span>
           </h1>
           <p class="mt-6 text-xl text-slate-400 font-medium max-w-2xl leading-relaxed">
             Destek ekibimize ve sosyal medya ağımıza doğrudan kanallar. Arşivimizi keşfedin ve bizimle bağlantı kurun.
@@ -110,6 +110,11 @@ import { SystemSetting } from '../../../core/models/system-setting.model';
   styles: [`
     :host { display: block; background: black; }
     .font-display { font-family: 'Outfit', sans-serif; }
+    .text-archive-outline {
+      color: transparent;
+      -webkit-text-stroke: 1.5px white;
+      text-stroke: 1.5px white;
+    }
   `]
 })
 export class ContactComponent implements OnInit {
