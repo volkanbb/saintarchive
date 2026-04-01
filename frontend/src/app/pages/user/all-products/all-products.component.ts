@@ -50,7 +50,7 @@ import { Title, Meta } from '@angular/platform-browser';
                 (click)="toggleCategoryDropdown(); $event.stopPropagation()"
                 class="w-full flex items-center justify-between bg-[#0a0a0a]/60 backdrop-blur-md text-white border border-white/10 rounded-xl px-5 py-4 focus:outline-none focus:border-[#c5a059]/50 transition-all font-display font-bold uppercase tracking-widest text-xs hover:bg-[#0a0a0a]/80 group"
               >
-                <span [class.text-[#c5a059]]="selectedCategoryId !== null">{{ displayTitle }}</span>
+                <span class="transition-colors" [style.color]="selectedCategoryId ? '#c5a059' : 'inherit'">{{ displayTitle }}</span>
                 <svg 
                   class="w-4 h-4 text-[#c5a059] transition-transform duration-300" 
                   [class.rotate-180]="isCategoryDropdownOpen"
@@ -69,8 +69,7 @@ import { Title, Meta } from '@angular/platform-browser';
                   <button 
                     (click)="selectCategory(null)"
                     class="w-full text-left px-5 py-4 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white/5 border-b border-white/5"
-                    [class.text-[#c5a059]]="selectedCategoryId === null"
-                    [class.text-white/70]="selectedCategoryId !== null"
+                    [style.color]="!selectedCategoryId ? '#c5a059' : '#ffffff'"
                   >
                     TÜMÜ
                   </button>
@@ -78,8 +77,7 @@ import { Title, Meta } from '@angular/platform-browser';
                     *ngFor="let cat of categories"
                     (click)="selectCategory(cat.id)"
                     class="w-full text-left px-5 py-4 text-xs font-bold uppercase tracking-widest transition-all hover:bg-white/5 border-b border-white/5 last:border-0"
-                    [class.text-[#c5a059]]="selectedCategoryId === cat.id"
-                    [class.text-white/70]="selectedCategoryId !== cat.id"
+                    [style.color]="selectedCategoryId === cat.id ? '#c5a059' : '#ffffff'"
                   >
                     {{ cat.name }}
                   </button>
