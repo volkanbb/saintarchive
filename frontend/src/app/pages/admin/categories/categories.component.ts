@@ -44,10 +44,17 @@ import { BulkEditCategoryDetailsModalComponent } from './bulk-edit-category-deta
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-1">Sub-categories (Comma separated)</label>
               <input type="text" [(ngModel)]="subCategoryNames" name="subs" 
-                     class="block w-full rounded-xl border-slate-300 border bg-slate-50 px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors" placeholder="e.g. Giyim, Aksesuar, Ayakkabı">
-              <p class="text-[10px] text-slate-400 mt-1">Enter names separated by commas to add multiple sub-categories. Existing ones will be preserved.</p>
+                     class="block w-full rounded-xl border-slate-300 border bg-slate-50 px-4 py-2 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors" placeholder="e.g. Giyim, Aksesuar, Ayakkabı...">
             </div>
           </div>
+
+          <!-- Navbar Toggle -->
+          <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <input type="checkbox" [(ngModel)]="newCategory.showInNavbar" name="showInNavbar" id="showInNavbar"
+                   class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer">
+            <label for="showInNavbar" class="text-sm font-bold text-slate-700 cursor-pointer uppercase tracking-tight">Show this category in the top navigation bar</label>
+          </div>
+
           <!-- Image preview -->
           <div *ngIf="newCategory.imageUrl" class="flex items-center gap-3">
             <div class="relative group">
@@ -208,7 +215,7 @@ import { BulkEditCategoryDetailsModalComponent } from './bulk-edit-category-deta
 })
 export class CategoriesComponent implements OnInit {
   categories: Category[] = [];
-  newCategory = { name: '', description: '', imageUrl: '' };
+  newCategory = { name: '', description: '', imageUrl: '', showInNavbar: false };
   subCategoryNames = '';
   editingCategory: Category | null = null;
   imageError = false;
@@ -239,6 +246,7 @@ export class CategoriesComponent implements OnInit {
 
     const payload = {
       ...this.newCategory,
+      showInNavbar: this.newCategory.showInNavbar,
       subCategories: subCategories as any
     };
 
@@ -275,7 +283,8 @@ export class CategoriesComponent implements OnInit {
     this.newCategory = { 
       name: cat.name, 
       description: cat.description, 
-      imageUrl: cat.imageUrl || '' 
+      imageUrl: cat.imageUrl || '',
+      showInNavbar: !!cat.showInNavbar
     };
     // Populate existing sub-categories for easy addition
     this.subCategoryNames = cat.subCategories?.map(s => s.name).join(', ') || '';
@@ -288,7 +297,7 @@ export class CategoriesComponent implements OnInit {
   }
 
   resetForm() {
-    this.newCategory = { name: '', description: '', imageUrl: '' };
+    this.newCategory = { name: '', description: '', imageUrl: '', showInNavbar: false };
     this.subCategoryNames = '';
     this.imageError = false;
   }
