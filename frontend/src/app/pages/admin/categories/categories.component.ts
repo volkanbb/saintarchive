@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../../core/services/category.service';
 import { ProductService } from '../../../core/services/product.service';
 import { Category } from '../../../core/models/category.model';
-import { BulkEditCategoryDetailsModalComponent } from './bulk-edit-category-details-modal.component';
+import { BulkEditCategoryDetailsModalComponent } from './bulk-edit-modal.component';
 
 @Component({
   selector: 'app-categories',
