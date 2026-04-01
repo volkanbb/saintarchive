@@ -9,7 +9,7 @@ import { ProductService } from '../../../core/services/product.service';
   selector: 'app-bulk-edit-category-details-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './bulk-edit-category-details-modal.component.html',
+  templateUrl: './bulk-edit-modal.component.html',
   styles: [`
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .animate-zoom-in { animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }

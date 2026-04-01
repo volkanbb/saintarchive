@@ -59,11 +59,8 @@
                   <span class="text-[9px] text-white/40 uppercase tracking-widest">Display between Collection and Contact</span>
                 </div>
                 <div class="relative inline-flex items-center cursor-pointer" (click)="item.showInNavbar = !item.showInNavbar">
-                  <div class="w-11 h-6 rounded-full transition-colors duration-200"
-                       [class.bg-brand-600]="item.showInNavbar"
-                       [class.bg-white/10]="!item.showInNavbar"></div>
-                  <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200"
-                       [style.transform]="item.showInNavbar ? 'translateX(20px)' : 'translateX(0)'"></div>
+                <div class="w-11 h-6 rounded-full transition-colors duration-200" [ngClass]="item.showInNavbar ? 'bg-brand-600' : 'bg-white/10'"></div>
+                  <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200" [style.transform]="item.showInNavbar ? 'translateX(20px)' : 'translateX(0)'"></div>
                 </div>
               </div>
             </div>
