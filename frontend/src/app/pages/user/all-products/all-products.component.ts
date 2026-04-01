@@ -1,6 +1,6 @@
 import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
@@ -167,7 +167,8 @@ export class AllProductsComponent implements OnInit {
     private route: ActivatedRoute,
     private titleService: Title,
     private metaService: Meta,
-    private el: ElementRef
+    private el: ElementRef,
+    private router: Router
   ) {}
 
   isCategoryDropdownOpen = false;
@@ -249,12 +250,11 @@ export class AllProductsComponent implements OnInit {
   }
 
   filterByCategory(categoryId: string | null) {
-    this.selectedCategoryId = categoryId;
-    this.selectedSubCategoryId = null;
-    this.applyFilters();
-    
-    const catName = this.categories.find(c => c.id === categoryId)?.name;
-    this.updateSeoTags(catName);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { category: categoryId || undefined },
+      queryParamsHandling: 'merge'
+    });
   }
 
   getMainImageUrl(product: Product): string {
