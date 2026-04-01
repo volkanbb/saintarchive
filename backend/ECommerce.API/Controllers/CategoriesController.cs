@@ -30,6 +30,8 @@ public class CategoriesController : ControllerBase
                 Description = c.Description,
                 Slug = c.Slug,
                 ImageUrl = c.ImageUrl,
+                ShowInNavbar = c.ShowInNavbar,
+                NavbarOrder = c.NavbarOrder,
                 SubCategories = c.SubCategories.Select(s => new CategoryDto
                 {
                     Id = s.Id,
@@ -37,7 +39,9 @@ public class CategoriesController : ControllerBase
                     Description = s.Description,
                     Slug = s.Slug,
                     ImageUrl = s.ImageUrl,
-                    ParentCategoryId = s.ParentCategoryId
+                    ParentCategoryId = s.ParentCategoryId,
+                    ShowInNavbar = s.ShowInNavbar,
+                    NavbarOrder = s.NavbarOrder
                 }).ToList()
             })
             .ToListAsync();
@@ -56,7 +60,9 @@ public class CategoriesController : ControllerBase
                 Description = c.Description,
                 Slug = c.Slug,
                 ImageUrl = c.ImageUrl,
-                ParentCategoryId = c.ParentCategoryId
+                ParentCategoryId = c.ParentCategoryId,
+                ShowInNavbar = c.ShowInNavbar,
+                NavbarOrder = c.NavbarOrder
             })
             .ToListAsync();
 
@@ -75,6 +81,8 @@ public class CategoriesController : ControllerBase
                 Slug = c.Slug,
                 ImageUrl = c.ImageUrl,
                 ParentCategoryId = c.ParentCategoryId,
+                ShowInNavbar = c.ShowInNavbar,
+                NavbarOrder = c.NavbarOrder,
                 SubCategories = c.SubCategories.Select(s => new CategoryDto
                 {
                     Id = s.Id,
@@ -82,7 +90,9 @@ public class CategoriesController : ControllerBase
                     Description = s.Description,
                     Slug = s.Slug,
                     ImageUrl = s.ImageUrl,
-                    ParentCategoryId = s.ParentCategoryId
+                    ParentCategoryId = s.ParentCategoryId,
+                    ShowInNavbar = s.ShowInNavbar,
+                    NavbarOrder = s.NavbarOrder
                 }).ToList()
             })
             .FirstOrDefaultAsync(c => c.Id == id);
@@ -104,7 +114,9 @@ public class CategoriesController : ControllerBase
             Description = request.Description,
             Slug = request.Name.ToLower().Replace(" ", "-"),
             ImageUrl = request.ImageUrl,
-            ParentCategoryId = request.ParentCategoryId
+            ParentCategoryId = request.ParentCategoryId,
+            ShowInNavbar = request.ShowInNavbar,
+            NavbarOrder = request.NavbarOrder
         };
 
         _context.Categories.Add(category);
@@ -146,6 +158,8 @@ public class CategoriesController : ControllerBase
         category.Description = request.Description;
         category.Slug = request.Name.ToLower().Replace(" ", "-");
         category.ImageUrl = request.ImageUrl;
+        category.ShowInNavbar = request.ShowInNavbar;
+        category.NavbarOrder = request.NavbarOrder;
         category.UpdatedAt = DateTime.UtcNow;
 
         // Bulk add sub-categories if provided
@@ -211,7 +225,15 @@ public class CategoriesController : ControllerBase
                 category.Description = item.Description;
                 category.Slug = item.Name.ToLower().Replace(" ", "-");
                 category.ImageUrl = item.ImageUrl;
+                
+                if (item.ShowInNavbar.HasValue) 
+                    category.ShowInNavbar = item.ShowInNavbar.Value;
+                
+                if (item.NavbarOrder.HasValue)
+                    category.NavbarOrder = item.NavbarOrder.Value;
+
                 category.UpdatedAt = DateTime.UtcNow;
+                
 
                 if (item.SubCategoryNames != null && item.SubCategoryNames.Any())
                 {
@@ -248,4 +270,6 @@ public class CategoryDetailUpdateItem
     public string Description { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
     public List<string>? SubCategoryNames { get; set; }
+    public bool? ShowInNavbar { get; set; }
+    public int? NavbarOrder { get; set; }
 }

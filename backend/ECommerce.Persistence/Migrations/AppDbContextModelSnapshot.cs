@@ -42,8 +42,14 @@ namespace ECommerce.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("NavbarOrder")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("ShowInNavbar")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Slug")
                         .IsRequired()

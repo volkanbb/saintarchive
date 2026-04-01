@@ -22,6 +22,12 @@ public class CategoryDto
     [JsonPropertyName("parentCategoryId")]
     public Guid? ParentCategoryId { get; set; }
 
+    [JsonPropertyName("showInNavbar")]
+    public bool ShowInNavbar { get; set; }
+
+    [JsonPropertyName("navbarOrder")]
+    public int NavbarOrder { get; set; }
+
     [JsonPropertyName("subCategories")]
     public List<CategoryDto> SubCategories { get; set; } = new();
 }

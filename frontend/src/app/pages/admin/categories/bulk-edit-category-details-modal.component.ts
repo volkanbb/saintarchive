@@ -70,6 +70,29 @@ import { ProductService } from '../../../core/services/product.service';
                            class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                            placeholder="Sub1, Sub2, Sub3">
                   </div>
+
+                  <!-- Navbar Settings -->
+                  <div class="md:col-span-2 p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-8">
+                    <div class="flex items-center gap-4">
+                      <div class="relative inline-flex items-center cursor-pointer" (click)="item.showInNavbar = !item.showInNavbar">
+                        <div class="w-11 h-6 rounded-full transition-colors duration-200"
+                             [class.bg-brand-600]="item.showInNavbar"
+                             [class.bg-white/10]="!item.showInNavbar"></div>
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200"
+                             [style.transform]="item.showInNavbar ? 'translateX(20px)' : 'translateX(0)'"></div>
+                      </div>
+                      <div>
+                        <span class="text-[10px] font-black text-white uppercase tracking-widest block">Show in Navbar</span>
+                        <span class="text-[9px] text-white/40 uppercase tracking-widest">Display as top-level link</span>
+                      </div>
+                    </div>
+
+                    <div *ngIf="item.showInNavbar" class="flex items-center gap-3 animate-zoom-in">
+                      <span class="text-[10px] font-black text-white/40 uppercase tracking-widest">Order:</span>
+                      <input type="number" [(ngModel)]="item.navbarOrder" 
+                             class="w-16 bg-black/40 border border-white/5 rounded-lg px-2 py-1 text-xs text-brand-500 font-bold focus:ring-1 focus:ring-brand-500 outline-none">
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -120,6 +143,8 @@ export class BulkEditCategoryDetailsModalComponent implements OnInit {
       name: c.name,
       description: c.description,
       imageUrl: c.imageUrl || '',
+      showInNavbar: c.showInNavbar || false,
+      navbarOrder: c.navbarOrder || 0,
       subCategoryNamesStr: c.subCategories?.map(s => s.name).join(', ') || ''
     }));
   }
@@ -140,6 +165,8 @@ export class BulkEditCategoryDetailsModalComponent implements OnInit {
       name: item.name,
       description: item.description,
       imageUrl: item.imageUrl,
+      showInNavbar: item.showInNavbar,
+      navbarOrder: item.navbarOrder,
       subCategoryNames: item.subCategoryNamesStr.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
     }));
 

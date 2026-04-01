@@ -28,6 +28,15 @@ import { ProductService } from '../../core/services/product.service';
         <nav class="hidden md:flex items-center space-x-12 font-display text-lg tracking-widest text-white/60">
           <a routerLink="/" routerLinkActive="text-white" [routerLinkActiveOptions]="{exact: true}" class="hover:text-white transition-colors uppercase">Archive</a>
           
+          <!-- Selected Navbar Categories -->
+          <ng-container *ngFor="let navCat of navbarCategories">
+            <a [routerLink]="['/products']" [queryParams]="{category: navCat.id}"
+               routerLinkActive="text-white"
+               class="hover:text-white transition-colors uppercase">
+              {{ navCat.name }}
+            </a>
+          </ng-container>
+
           <!-- Collection Dropdown -->
           <div class="relative" (mouseenter)="showDropdown = true" (mouseleave)="showDropdown = false">
             <a routerLink="/products" class="hover:text-white transition-colors uppercase cursor-pointer flex items-center gap-1">
@@ -195,9 +204,19 @@ import { ProductService } from '../../core/services/product.service';
       </div>
  
       <!-- Mobile Menu -->
-      <div *ngIf="showMobileMenu" class="md:hidden bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/5 px-4 py-6 max-h-[85vh] overflow-y-auto">
-        <a routerLink="/" (click)="showMobileMenu = false" class="block py-3 text-white uppercase tracking-widest font-display">Archive</a>
+      <div *ngIf="showMobileMenu" class="md:hidden bg-[#0a0a0a]/95 backdrop-blur-md border-t border-white/5 px-4 py-8 max-h-[85vh] overflow-y-auto">
+        <a routerLink="/" (click)="showMobileMenu = false" class="block py-4 text-white uppercase tracking-[0.2em] font-display text-xl border-b border-white/5 mb-6">Archive</a>
         
+        <!-- Selected Navbar Categories (Mobile) -->
+        <div class="mb-4 space-y-1">
+          <a *ngFor="let navCat of navbarCategories" 
+             [routerLink]="['/products']" [queryParams]="{category: navCat.id}"
+             (click)="showMobileMenu = false"
+             class="block py-4 px-2 text-white uppercase tracking-[0.2em] font-display text-xl border-b border-white/5 active:text-[#c5a059] transition-colors">
+            {{ navCat.name }}
+          </a>
+        </div>
+
         <div class="py-3">
           <div class="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Koleksiyon</div>
           <a routerLink="/products" (click)="showMobileMenu = false" class="block py-2 text-[#c5a059] uppercase tracking-wider font-bold">Tüm Ürünler</a>
@@ -264,6 +283,7 @@ import { ProductService } from '../../core/services/product.service';
 export class UserLayoutComponent implements OnInit {
   currentYear = new Date().getFullYear();
   categories: Category[] = [];
+  navbarCategories: Category[] = [];
   settings: SystemSetting[] = [];
   showDropdown = false;
   showContactDropdown = false;
@@ -323,7 +343,12 @@ export class UserLayoutComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.categoryService.getCategories().subscribe(data => this.categories = data);
+    this.categoryService.getCategories().subscribe(data => {
+      this.categories = data;
+      this.navbarCategories = data
+        .filter(c => c.showInNavbar)
+        .sort((a, b) => (a.navbarOrder || 0) - (b.navbarOrder || 0));
+    });
     this.settingService.getSettings().subscribe(data => this.settings = data);
   }
 

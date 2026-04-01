@@ -11,5 +11,8 @@ public class Category : BaseEntity
     public Category? ParentCategory { get; set; }
     public ICollection<Category> SubCategories { get; set; } = new List<Category>();
 
+    public bool ShowInNavbar { get; set; }
+    public int NavbarOrder { get; set; }
+
     public ICollection<Product> Products { get; set; } = new List<Product>();
 }
