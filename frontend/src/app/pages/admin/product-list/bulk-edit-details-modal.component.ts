@@ -27,6 +27,23 @@ import { ProductService } from '../../../core/services/product.service';
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-8 scrollbar-hide">
           <div class="space-y-6">
+            <!-- Bulk Operations Section -->
+            <div class="p-6 bg-[#c5a059]/10 rounded-3xl border border-[#c5a059]/20 mb-8">
+              <div class="flex flex-col md:flex-row md:items-end gap-6">
+                <div class="flex-1">
+                  <label class="text-[10px] font-black text-[#c5a059] uppercase tracking-[0.2em] mb-2 block">Set Bulk Title for All Products</label>
+                  <input [(ngModel)]="bulkTitle" 
+                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-[#c5a059] focus:border-transparent transition-all"
+                         placeholder="Enter common title for all selected items...">
+                </div>
+                <button (click)="applyBulkTitleAll()"
+                        [disabled]="!bulkTitle.trim()"
+                        class="px-8 py-3 bg-[#c5a059] text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#d4b476] transition-all disabled:opacity-50 disabled:grayscale">
+                  Apply to All
+                </button>
+              </div>
+            </div>
+
             <div *ngFor="let item of editableItems; let i = index" 
                  class="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
               <div class="flex gap-6">
@@ -109,6 +126,7 @@ export class BulkEditDetailsModalComponent implements OnInit {
 
   editableItems: any[] = [];
   isSaving = false;
+  bulkTitle: string = ''; // New: state for bulk title input
 
   constructor(private productService: ProductService) {}
 
@@ -124,6 +142,14 @@ export class BulkEditDetailsModalComponent implements OnInit {
 
   getMainImageUrl(product: Product): string {
     return this.productService.getMainImageUrl(product);
+  }
+
+  // New: Apply title to all items
+  applyBulkTitleAll() {
+    if (!this.bulkTitle.trim()) return;
+    this.editableItems.forEach(item => {
+      item.title = this.bulkTitle;
+    });
   }
 
   save() {
