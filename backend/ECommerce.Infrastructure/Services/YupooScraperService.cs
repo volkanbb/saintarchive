@@ -44,11 +44,32 @@ public class YupooScraperService : IYupooScraperService, IDisposable
         }
     }
 
+    private async Task<(IBrowserContext Context, IPage Page)> CreateStealthPageAsync(IBrowser browser)
+    {
+        var context = await browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ViewportSize = new ViewportSize { Width = 1920, Height = 1080 }
+        });
+
+        var page = await context.NewPageAsync();
+
+        await page.AddInitScriptAsync(@"
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.navigator.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['tr-TR', 'tr', 'en-US', 'en'] });
+        ");
+
+        return (context, page);
+    }
+
     public async Task<List<string>> ScrapeCategoryAsync(string categoryUrl, CancellationToken cancellationToken = default)
     {
         var albumUrls = new List<string>();
         var browser = await GetBrowserAsync();
-        var page = await browser.NewPageAsync();
+        var stealth = await CreateStealthPageAsync(browser);
+        var page = stealth.Page;
 
         try
         {
@@ -144,6 +165,7 @@ public class YupooScraperService : IYupooScraperService, IDisposable
         finally
         {
             await page.CloseAsync();
+            await stealth.Context.CloseAsync();
         }
         return albumUrls;
     }
@@ -156,8 +178,9 @@ public class YupooScraperService : IYupooScraperService, IDisposable
         await Parallel.ForEachAsync(urls, new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency, CancellationToken = ct }, async (url, token) =>
         {
             // Context per task to isolate cookies/cache if needed
-            var context = await browser.NewContextAsync();
-            var page = await context.NewPageAsync();
+            var stealth = await CreateStealthPageAsync(browser);
+            var context = stealth.Context;
+            var page = stealth.Page;
             try
             {
                 var info = await ScrapeProductInternalAsync(page, url);
@@ -197,7 +220,8 @@ public class YupooScraperService : IYupooScraperService, IDisposable
     public async Task<ScrapedProductInfo> ScrapeProductAsync(string yupooUrl, CancellationToken cancellationToken = default)
     {
         var browser = await GetBrowserAsync();
-        var page = await browser.NewPageAsync();
+        var stealth = await CreateStealthPageAsync(browser);
+        var page = stealth.Page;
         try
         {
             return await ScrapeProductInternalAsync(page, yupooUrl);
@@ -205,6 +229,7 @@ public class YupooScraperService : IYupooScraperService, IDisposable
         finally
         {
             await page.CloseAsync();
+            await stealth.Context.CloseAsync();
         }
     }
 
