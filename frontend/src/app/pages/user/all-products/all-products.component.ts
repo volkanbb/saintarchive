@@ -1,4 +1,5 @@
-import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, HostListener, ElementRef, NgZone, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
@@ -34,7 +35,7 @@ import { Title, Meta } from '@angular/platform-browser';
             <div class="h-1 w-20 bg-[#c5a059] mt-2"></div>
           </div>
           <p class="text-white text-base font-bold font-mono" style="text-shadow: 0 1px 6px #000;">
-            {{filteredProducts.length}} ÜRÜN {{ searchTerm ? 'BULUNDU' : 'LİSTELENİYOR' }}
+            {{totalCount}} ÜRÜN {{ searchTerm ? 'BULUNDU' : 'LİSTELENİYOR' }}
           </p>
         </div>
 
@@ -108,7 +109,7 @@ import { Title, Meta } from '@angular/platform-browser';
 
         <!-- Product Grid -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-x-10 md:gap-y-16">
-          <a *ngFor="let product of filteredProducts" [routerLink]="['/product', product.id]" class="group flex flex-col">
+          <a *ngFor="let product of products; trackBy: trackById" [routerLink]="['/product', product.id]" class="group flex flex-col">
             
             <!-- Premium Product Card -->
             <div class="relative overflow-hidden rounded-xl aspect-[3/4] bg-[#111] border border-white/5 group-hover:border-[#c5a059]/40 transition-all duration-500 mb-5">
@@ -117,6 +118,7 @@ import { Title, Meta } from '@angular/platform-browser';
                    [src]="getMainImageUrl(product)" 
                    [alt]="product.title" 
                    loading="lazy"
+                   decoding="async"
                    referrerpolicy="no-referrer"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
               
@@ -144,8 +146,17 @@ import { Title, Meta } from '@angular/platform-browser';
           </a>
         </div>
 
+        <!-- Infinite scroll sentinel -->
+        <div #loadMoreSentinel class="flex justify-center pt-16">
+          <div *ngIf="loading" class="w-8 h-8 border-2 border-white/10 border-t-[#c5a059] rounded-full animate-spin"></div>
+          <button *ngIf="!loading && hasMore()" (click)="loadMore()"
+                  class="px-10 py-4 rounded-full border border-[#c5a059]/30 text-[#c5a059] font-bold text-xs tracking-[0.3em] uppercase hover:bg-[#c5a059] hover:text-black transition-all duration-300">
+            DAHA FAZLA YÜKLE
+          </button>
+        </div>
+
         <!-- Empty State -->
-        <div *ngIf="filteredProducts.length === 0" class="text-center py-20">
+        <div *ngIf="!loading && products.length === 0" class="text-center py-20">
           <p class="text-white/50 text-lg">Bu kategoride ürün bulunamadı.</p>
         </div>
       </div>
@@ -153,9 +164,16 @@ import { Title, Meta } from '@angular/platform-browser';
     </div>
   `
 })
-export class AllProductsComponent implements OnInit {
+export class AllProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   products: Product[] = [];
-  filteredProducts: Product[] = [];
+  totalCount = 0;
+  loading = false;
+  private readonly pageSize = 24;
+  private currentPage = 0;
+  private pageSub?: Subscription;
+  private paramsSub?: Subscription;
+  private observer?: IntersectionObserver;
+  @ViewChild('loadMoreSentinel') sentinel?: ElementRef<HTMLElement>;
   categories: Category[] = [];
   selectedCategoryId: string | null = null;
   selectedSubCategoryId: string | null = null;
@@ -168,7 +186,8 @@ export class AllProductsComponent implements OnInit {
     private titleService: Title,
     private metaService: Meta,
     private el: ElementRef,
-    private router: Router
+    private router: Router,
+    private zone: NgZone
   ) {}
 
   isCategoryDropdownOpen = false;
@@ -193,7 +212,7 @@ export class AllProductsComponent implements OnInit {
     this.categoryService.getCategories().subscribe(data => this.categories = data);
     
     // Listen to query params for search or category changes
-    this.route.queryParams.subscribe(params => {
+    this.paramsSub = this.route.queryParams.subscribe(params => {
       const search = params['search'];
       const categoryId = params['category'];
       
@@ -205,12 +224,74 @@ export class AllProductsComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit(): void {
+    if (!this.sentinel || typeof IntersectionObserver === 'undefined') return;
+    this.observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) {
+        this.zone.run(() => this.loadMore());
+      }
+    }, { rootMargin: '600px' });
+    this.observer.observe(this.sentinel.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.pageSub?.unsubscribe();
+    this.paramsSub?.unsubscribe();
+  }
+
+  /** Resets the grid and loads the first page with the current filters. */
   loadProducts() {
-    this.productService.getProducts(this.searchTerm || undefined).subscribe(data => {
-      this.products = data;
-      this.applyFilters();
-      this.updateSeoTags(this.categories.find(c => c.id === this.selectedCategoryId)?.name);
+    this.pageSub?.unsubscribe();
+    this.products = [];
+    this.totalCount = 0;
+    this.currentPage = 0;
+    this.loading = false;
+    this.loadMore();
+    this.updateSeoTags(this.categories.find(c => c.id === this.selectedCategoryId)?.name);
+  }
+
+  loadMore() {
+    if (this.loading || (this.currentPage > 0 && !this.hasMore())) return;
+
+    this.loading = true;
+    const nextPage = this.currentPage + 1;
+    this.pageSub = this.productService.getProductsPaged(
+      nextPage,
+      this.pageSize,
+      this.searchTerm || undefined,
+      this.selectedCategoryId || undefined,
+      this.selectedSubCategoryId || undefined
+    ).subscribe({
+      next: res => {
+        const existing = new Set(this.products.map(p => p.id));
+        this.products = this.products.concat(res.items.filter(p => !existing.has(p.id)));
+        this.totalCount = res.totalCount;
+        this.currentPage = nextPage;
+        this.loading = false;
+        // If the sentinel is still on screen (short page), keep filling.
+        setTimeout(() => this.loadMoreIfSentinelVisible());
+      },
+      error: () => {
+        this.loading = false;
+      }
     });
+  }
+
+  hasMore(): boolean {
+    return this.products.length < this.totalCount;
+  }
+
+  private loadMoreIfSentinelVisible() {
+    const el = this.sentinel?.nativeElement;
+    if (!el || !this.hasMore()) return;
+    if (el.getBoundingClientRect().top < window.innerHeight + 600) {
+      this.loadMore();
+    }
+  }
+
+  trackById(_: number, product: Product): string {
+    return product.id;
   }
 
   private updateSeoTags(categoryName?: string) {
@@ -238,15 +319,7 @@ export class AllProductsComponent implements OnInit {
 
   filterBySubCategory(subId: string | null) {
     this.selectedSubCategoryId = subId;
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    this.filteredProducts = this.products.filter(p => {
-      const matchCat = !this.selectedCategoryId || p.categoryId === this.selectedCategoryId;
-      const matchSub = !this.selectedSubCategoryId || p.subCategoryId === this.selectedSubCategoryId;
-      return matchCat && matchSub;
-    });
+    this.loadProducts();
   }
 
   filterByCategory(categoryId: string | null) {

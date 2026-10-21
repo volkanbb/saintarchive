@@ -321,7 +321,7 @@ export class UserLayoutComponent implements OnInit {
         this.isSearching = true;
         
         // Search Products (which now includes category filter on backend)
-        const products$ = this.productService.getProducts(query);
+        const products$ = this.productService.getProductsPaged(1, 5, query).pipe(map(res => res.items));
         
         // Local Category Search
         const matchingCategories = this.categories.filter(c => 

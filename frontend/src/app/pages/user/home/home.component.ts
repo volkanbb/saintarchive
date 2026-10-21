@@ -176,7 +176,6 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.productService.getProducts().subscribe(data => this.products = data);
     this.productService.getFeaturedProducts().subscribe(data => {
       this.featuredProducts = data;
       this.startAutoSlide();
