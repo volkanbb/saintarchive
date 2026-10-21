@@ -3,6 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Product, ScrapedProductInfo, Size } from '../models/product.model';
 
+export interface PagedProducts {
+  items: Product[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -29,6 +36,16 @@ export class ProductService {
     }
     
     return this.http.get<Product[]>(url);
+  }
+
+  getProductsPaged(page: number, pageSize: number, search?: string, categoryId?: string, subCategoryId?: string): Observable<PagedProducts> {
+    const params: string[] = [`page=${page}`, `pageSize=${pageSize}`];
+
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (categoryId) params.push(`categoryId=${categoryId}`);
+    if (subCategoryId) params.push(`subCategoryId=${subCategoryId}`);
+
+    return this.http.get<PagedProducts>(`${this.API_URL}/paged?${params.join('&')}`);
   }
 
   getFeaturedProducts(): Observable<Product[]> {

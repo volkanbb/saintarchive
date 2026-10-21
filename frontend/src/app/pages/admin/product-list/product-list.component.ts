@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
@@ -35,6 +36,11 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
 
       <div class="flex items-center gap-4 mb-8 p-4 bg-white rounded-2xl border border-slate-200">
         <div class="flex-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Search</label>
+          <input type="text" [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)" placeholder="Title or category..."
+                 class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500 transition-all">
+        </div>
+        <div class="flex-1">
           <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Main Category</label>
           <select [(ngModel)]="selectedCategoryId" (change)="onCategoryChange()" 
                   class="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500 transition-all cursor-pointer">
@@ -51,7 +57,7 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
           </select>
         </div>
         <div class="w-10 flex items-end justify-center pb-2">
-            <button *ngIf="selectedCategoryId || selectedSubCategoryId" (click)="clearFilters()" class="text-slate-300 hover:text-red-500 transition-colors" title="Clear Filters">
+            <button *ngIf="searchTerm || selectedCategoryId || selectedSubCategoryId" (click)="clearFilters()" class="text-slate-300 hover:text-red-500 transition-colors" title="Clear Filters">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
@@ -107,7 +113,7 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr *ngFor="let product of products" class="hover:bg-slate-50/50 transition-colors group" [class.bg-brand-50]="selectedProductIds.has(product.id)">
+              <tr *ngFor="let product of products; trackBy: trackById" class="hover:bg-slate-50/50 transition-colors group" [class.bg-brand-50]="selectedProductIds.has(product.id)">
                 <td class="pl-6 py-4">
                     <input type="checkbox" [checked]="selectedProductIds.has(product.id)" (change)="toggleSelection(product.id)"
                            class="w-5 h-5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer transition-all">
@@ -117,6 +123,8 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
                     <div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                       <img *ngIf="product.images.length > 0" 
                            [src]="getMainImageUrl(product)" 
+                           loading="lazy"
+                           decoding="async"
                            referrerpolicy="no-referrer"
                            class="w-full h-full object-cover">
                     </div>
@@ -155,6 +163,17 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Infinite scroll sentinel / status -->
+        <div #loadMoreSentinel class="px-6 py-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>{{ products.length }} / {{ totalCount }} products loaded</span>
+          <span *ngIf="loading" class="font-bold uppercase tracking-widest text-[10px]">Loading...</span>
+          <button *ngIf="!loading && hasMore()" (click)="loadMore()"
+                  class="px-4 py-2 rounded-xl border border-slate-200 font-bold uppercase tracking-widest text-[10px] hover:bg-slate-50 transition-all">
+            Load More
+          </button>
+          <span *ngIf="!loading && !hasMore() && products.length === 0" class="font-bold">No products found.</span>
         </div>
       </div>
     </div>
@@ -215,8 +234,18 @@ import { BulkEditDetailsModalComponent } from './bulk-edit-details-modal.compone
     </app-bulk-edit-details-modal>
   `
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, AfterViewInit, OnDestroy {
   products: Product[] = [];
+  totalCount = 0;
+  loading = false;
+  searchTerm = '';
+  private readonly pageSize = 50;
+  private currentPage = 0;
+  private pageSub?: Subscription;
+  private searchSub?: Subscription;
+  private searchChanged = new Subject<string>();
+  private observer?: IntersectionObserver;
+  @ViewChild('loadMoreSentinel') sentinel?: ElementRef<HTMLElement>;
   selectedProductIds = new Set<string>();
   
   showBulkSizeModal = false;
@@ -234,19 +263,92 @@ export class ProductListComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.loadProducts();
     this.productService.getSizes().subscribe(data => this.availableSizes = data);
     this.categoryService.getCategories().subscribe(data => this.allCategories = data);
+    this.searchSub = this.searchChanged
+      .pipe(debounceTime(300))
+      .subscribe(() => this.loadProducts());
   }
 
+  ngAfterViewInit(): void {
+    if (!this.sentinel || typeof IntersectionObserver === 'undefined') return;
+    this.observer = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) {
+        this.zone.run(() => this.loadMore());
+      }
+    }, { rootMargin: '400px' });
+    this.observer.observe(this.sentinel.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.pageSub?.unsubscribe();
+    this.searchSub?.unsubscribe();
+  }
+
+  /** Resets the list and loads the first page with the current filters. */
   loadProducts() {
-    this.productService.getProducts(undefined, this.selectedCategoryId || undefined, this.selectedSubCategoryId || undefined).subscribe(data => {
-      this.products = data;
+    this.pageSub?.unsubscribe();
+    this.products = [];
+    this.totalCount = 0;
+    this.currentPage = 0;
+    this.loading = false;
+    this.loadMore();
+  }
+
+  loadMore() {
+    if (this.loading || (this.currentPage > 0 && !this.hasMore())) return;
+
+    this.loading = true;
+    const nextPage = this.currentPage + 1;
+    this.pageSub = this.productService.getProductsPaged(
+      nextPage,
+      this.pageSize,
+      this.searchTerm.trim() || undefined,
+      this.selectedCategoryId || undefined,
+      this.selectedSubCategoryId || undefined
+    ).subscribe({
+      next: res => {
+        const existing = new Set(this.products.map(p => p.id));
+        this.products = this.products.concat(res.items.filter(p => !existing.has(p.id)));
+        this.totalCount = res.totalCount;
+        this.currentPage = nextPage;
+        this.loading = false;
+        // If the sentinel is still on screen (short page), keep filling.
+        setTimeout(() => this.loadMoreIfSentinelVisible());
+      },
+      error: () => {
+        this.loading = false;
+      }
     });
+  }
+
+  hasMore(): boolean {
+    return this.products.length < this.totalCount;
+  }
+
+  private loadMoreIfSentinelVisible() {
+    const el = this.sentinel?.nativeElement;
+    if (!el || !this.hasMore()) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 400) {
+      this.loadMore();
+    }
+  }
+
+  onSearchChange(value: string) {
+    this.searchTerm = value;
+    this.searchChanged.next(value.trim());
+  }
+
+  trackById(_: number, product: Product): string {
+    return product.id;
   }
 
   toggleSelection(id: string) {
@@ -277,6 +379,7 @@ export class ProductListComponent implements OnInit {
     if (confirm('Are you sure you want to delete this product?')) {
       this.productService.deleteProduct(id).subscribe(() => {
         this.products = this.products.filter(p => p.id !== id);
+        this.totalCount = Math.max(0, this.totalCount - 1);
         this.selectedProductIds.delete(id);
       });
     }
@@ -287,6 +390,7 @@ export class ProductListComponent implements OnInit {
       const ids = Array.from(this.selectedProductIds);
       this.productService.bulkDelete(ids).subscribe(() => {
         this.products = this.products.filter(p => !this.selectedProductIds.has(p.id));
+        this.totalCount = Math.max(0, this.totalCount - ids.length);
         this.selectedProductIds.clear();
       });
     }
@@ -400,6 +504,7 @@ export class ProductListComponent implements OnInit {
   }
 
   clearFilters() {
+    this.searchTerm = '';
     this.selectedCategoryId = '';
     this.selectedSubCategoryId = '';
     this.loadProducts();

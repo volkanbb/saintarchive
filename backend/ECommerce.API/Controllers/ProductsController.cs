@@ -73,6 +73,72 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetProductsPaged(
+        [FromQuery] string? search,
+        [FromQuery] Guid? categoryId,
+        [FromQuery] Guid? subCategoryId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 200);
+
+        var query = _context.Products.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(p =>
+                p.Title.Contains(search) ||
+                p.Category.Name.Contains(search) ||
+                (p.SubCategory != null && p.SubCategory.Name.Contains(search)));
+        }
+
+        if (subCategoryId.HasValue)
+        {
+            query = query.Where(p => p.SubCategoryId == subCategoryId.Value);
+        }
+        else if (categoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .ThenBy(p => p.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Price = p.Price,
+                IsFeatured = p.IsFeatured,
+                SortOrder = p.SortOrder,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                SubCategoryId = p.SubCategoryId,
+                SubCategoryName = p.SubCategory != null ? p.SubCategory.Name : null,
+                Images = p.Images
+                    .OrderBy(i => i.SortOrder)
+                    .ThenByDescending(i => i.IsMain)
+                    .Select(i => new ProductImageDto
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        IsMain = i.IsMain,
+                        SortOrder = i.SortOrder
+                    }).ToList(),
+                Sizes = p.Sizes.Select(s => new SizeDto { Id = s.Id, Name = s.Name }).ToList()
+            })
+            .ToListAsync();
+
+        return Ok(new { items, totalCount, page, pageSize });
+    }
+
     [HttpGet("sizes")]
     public async Task<IActionResult> GetSizes()
     {
